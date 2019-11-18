@@ -1,0 +1,105 @@
+module PIT(prefix, length, table_entry, address, in_data, read_data, out_data, write_enable, in_bit, out_bit, start_bit, fib_out, clk, reset);
+
+input [63:0] prefix, table_entry;
+input [4:0] length;
+input [7:0] in_data, read_data;
+input in_bit, out_bit, clk, reset;
+
+output [61:0] address;
+output [7:0] out_data;
+output start_bit, write_enable;
+
+reg [2:0] state;
+reg [63:0] pit_prefix, pit_table_entry;
+reg [61:0] pit_address;
+reg [4:0] pit_length;
+reg [9:0] memory_count;
+
+
+parameter IDLE = 3'b000;
+parameter RECEIVING_PIT = 3'b001;
+parameter RECEIVING_FIB = 3'b010;
+parameter MEMORY_IN = 3'b011;
+parameter MEMORY_OUT = 3'b100;
+parameter MEMORY_WRITE = 3'b101;
+parameter SENDING_FIB = 3'b110;
+parameter RESET = 3'b111;
+parameter received_bit = 62;
+
+always@(posedge clk)
+begin
+	case(state)
+	IDLE:
+	begin
+		if(out_bit)
+		begin
+			state <= RECEIVING_PIT;
+		end
+		if(in_bit)
+		begin
+			state <= RECEIVING_FIB;
+		end
+	end
+	RECEIVING_PIT:
+	begin
+		if(table_entry[received_bit])
+		begin
+			state <= MEMORY_OUT;
+			pit_address <= table_entry[61:0] + 6;
+			memory_count <= 0;
+		end
+		else
+		begin
+			fib_out <= 1;
+			state <= RESET;
+		end
+	end
+	RECEIVING_FIB:
+	begin
+		memory_count <= 0;
+		write_enable <= 1;
+		start_bit <= 1;
+		pit_address <= table_entry[61:0] + 6;
+		state <= MEMORY_IN;
+	end
+	MEMORY_IN:
+	begin
+		if(memory_count < 1023)
+		begin
+			out_data <= in_data;
+			address <= pit_address;
+			pit_address <= pit_address + 1;
+			memory_count <= memory_count + 1;
+		end
+		else
+		begin
+			state <= IDLE;
+			start_bit = 0;
+			write_enable = 0;
+		end
+	end
+	MEMORY_OUT:
+	begin
+		if(memory_count < 1023)
+		begin
+			out_data <= read_data;
+			address <= pit_address;
+			pit_address <= pit_address + 1;
+			memory_count <= memory_count + 1;
+		end
+		else
+		begin
+			state <= IDLE;
+		end
+	end
+	SENDING_FIB:
+	begin
+	end
+	RESET:
+	begin
+		fib_out <= 0;
+		memory_count = 0;
+		state <= IDLE;
+	end
+end
+endmodule 
