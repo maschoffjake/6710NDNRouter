@@ -74,8 +74,8 @@ begin
 		else
 		begin
 			state <= IDLE;
-			start_bit = 0;
-			write_enable = 0;
+			start_bit <= 0;
+			write_enable <= 0;
 		end
 	end
 	MEMORY_OUT:
@@ -98,7 +98,7 @@ begin
 	RESET:
 	begin
 		fib_out <= 0;
-		memory_count = 0;
+		memory_count <= 0;
 		state <= IDLE;
 	end
 end
