@@ -38,6 +38,7 @@ begin
 			state <= RECEIVING_FIB;
 		end
 	end
+
 	RECEIVING_PIT:
 	begin
 		if(table_entry[received_bit])
@@ -60,6 +61,7 @@ begin
 		pit_address <= table_entry[61:0];
 		state <= MEMORY_IN;
 	end
+
 	MEMORY_IN:
 	begin
 		if(memory_count < 1023)
@@ -76,6 +78,7 @@ begin
 			write_enable <= 0;
 		end
 	end
+
 	MEMORY_OUT:
 	begin
 		if(memory_count < 1023)
@@ -90,6 +93,7 @@ begin
 			state <= IDLE;
 		end
 	end
+
 	MEMORY_WRITE:
 	begin
 	end
@@ -106,5 +110,6 @@ begin
 	begin
 		state <= RESET;
 	end
+	endcase
 end
 endmodule 
