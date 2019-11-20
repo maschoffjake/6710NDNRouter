@@ -29,8 +29,8 @@ module fib(
     // DATA OUTPUTS
     output [63:0] prefix_out,
     output [4:0] len_out,
-    output clk,
-    output ready
+    output clk_out,
+    output sync_clk,
 );
 
 /*
@@ -77,5 +77,5 @@ always @(posedge clk, rst) begin
 	else
 		outgoing_state <= outgoing_next_state;		
 	
-
+end
 endmodule
