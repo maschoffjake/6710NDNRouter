@@ -24,19 +24,19 @@ module fib(
     input rst,
 
     // PIT OUTPUTS
-    output [5:0] pit_out_len,
-    output [63:0] pit_out_prefix,
-    output prefix_ready,
-    output [7:0] out_data,
+    output reg [5:0] pit_out_len,
+    output reg [63:0] pit_out_prefix,
+    output reg prefix_ready,
+    output reg [7:0] out_data,
 
     // DATA OUTPUTS
-    output [63:0] prefix_out,
-    output [5:0] len_out,
-    output clk_out,
+    output reg [63:0] prefix_out,
+    output reg [5:0] len_out,
+    output reg clk_out,
 
     // HASH OUTPUTS
-    output [63:0] hash_prefix_in,
-    output [5:0] hash_len_in
+    output reg [63:0] hash_prefix_in,
+    output reg [5:0] hash_len_in
 );
 
 /*
