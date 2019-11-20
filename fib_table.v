@@ -72,15 +72,15 @@ always@(fib_out_bit, rst) begin
             // Set hash input values
             hash_prefix_in <= prefix;
             hash_len_in <= len;
-            outgoing_next_state <= grab_value;
+            outgoing_next_state <= check_for_valid_prefix;
         end
-        grab_value: begin
+        check_for_valid_prefix: begin
             hashtable_value = hashTable[len][hash_value];
             if (hashtable_value[64]) begin
                 // Valid entry, forward to output and then enter wait state for another outgoing packet
                 prefix_out <= prefix;
                 len_out <= len;
-                outgoing_next_state <= wait_state
+                outgoing_next_state <= wait_state;
             end
             else begin
                 // Not a valid entry, decrement the length and get a new hash
