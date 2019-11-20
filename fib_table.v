@@ -45,7 +45,7 @@ reg hashTable[63:0][1023:0][64:0];
 
 
 // Outgoing packet logic
-parameter wait_state = 0, hash_value = 1, grab_value = 2, check_for_valid_prefix = 3;
+parameter wait_state = 0, get_hash = 1, grab_value = 2, check_for_valid_prefix = 3;
 reg [1:0] outgoing_state;
 reg [1:0] outgoing_next_state;
 reg [9:0] hash_value;
@@ -58,7 +58,7 @@ always@(fib_out_bit, rst) begin
             if (fib_out_bit)
                 outgoing_next_state = grab_value;            
         end
-        hash_value: begin
+        get_hash: begin
             
         end
         grab_value: begin
