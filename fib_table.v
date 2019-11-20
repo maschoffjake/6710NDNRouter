@@ -30,7 +30,7 @@ module fib(
     output [63:0] prefix_out,
     output [4:0] len_out,
     output clk_out,
-    output sync_clk,
+    output sync_clk
 );
 
 /*
