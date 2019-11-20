@@ -17,7 +17,7 @@ module fib(
     input [7:0] data_in,
 
     // HASH INPUTS
-    input [9:0] hash;
+    input [9:0] hash,
 
     // OVERALL INPUTS 
     input clk,
