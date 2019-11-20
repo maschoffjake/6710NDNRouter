@@ -55,7 +55,7 @@ always@(fib_out_bit, rst) begin
     case (outgoing_state)
         wait_state: begin
             // Wait for flag to send data out!
-            if (fit_out_bit)
+            if (fib_out_bit)
                 outgoing_next_state = grab_value;            
         end
         hash_value: begin
