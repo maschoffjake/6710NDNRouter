@@ -44,7 +44,7 @@ module fib(
     where there are 1024 entries in the array of size 65. Each of these entries store a valid bit of 1
     and the prefix data associated with it
 */
-reg hashTable[5:0][9:0][64:0];
+reg [9:0] hashTable[5:0];
 
 // INCOMING PACKET LOGIC
 
@@ -72,7 +72,8 @@ always@(data_ready, saving_logic_state) begin
             saving_logic_next_state = save_to_fib_table;
         end
         save_to_fib_table: begin
-            hashTable[len_saving][saving_logic_hash] = {1'b1, prefix_saving};
+            // Set the valid bit high
+            hashTable[len_saving][saving_logic_hash] = 1'b1;
             saving_logic_next_state = wait_state;
         end
         default:
