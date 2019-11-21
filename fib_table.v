@@ -245,7 +245,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
                 */
                 if (len == 0) begin
                     prefix_out <= prefix;
-                    len_out <= 0
+                    len_out <= 0;
                     outgoing_next_state <= wait_state;
                 end
             end
