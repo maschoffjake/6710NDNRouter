@@ -42,6 +42,17 @@ module fib(
 */
 reg [9:0] hashTable[5:0];
 
+/*
+    Create a hashing unit in order to hash items. Creating its own hashing unit so we don't 
+    run into resources attempting to use the same hashing unit at the same time. Only need one
+    hashing unit for the FIB since outgoing and incoming packets won't collide.
+*/
+reg [63:0] hash_prefix_in;
+reg [9:0] hash_len_in;
+reg [9:0] saved_hash;
+wire [9:0] hash_value;
+hash HASH_INCOMING(hash_prefix_in, hash_len_in, hash_value, clk, rst);
+
 
 // INCOMING PACKET LOGIC
 
@@ -53,14 +64,6 @@ reg [1:0] saving_logic_state;
 reg [1:0] saving_logic_next_state;
 reg [63:0] prefix_saving;
 reg [5:0] len_saving;
-wire [9:0] saving_logic_hash;
-reg [9:0] saved_hash;
-
-/*
-    Create a hashing unit in order to hash items. Creating its own hashing unit so we don't 
-    run into resources attempting to use the same hashing unit at the same time.
-*/
-hash HASH_INCOMING(hash_prefix_in, hash_len_in, saving_logic_hash, clk, rst);
 
 always@(data_ready, saving_logic_state) begin
     case (saving_logic_state)
@@ -99,7 +102,7 @@ always@(posedge clk, rst) begin
 
     // Latch hash value after sending to values to hash table
     if (saving_logic_state == get_hash) begin
-        saved_hash <= saving_logic_hash;
+        saved_hash <= hash_value;
     end
 end
 
@@ -195,12 +198,6 @@ reg [64:0] hashtable_value;
 wire [9:0] hash_value;
 reg [9:0] saved_hash_outgoing;
 
-/*
-    Create a hashing unit in order to hash items. Creating its own hashing unit so we don't 
-    run into resources attempting to use the same hashing unit at the same time.
-*/
-hash HASH_OUTGOING(hash_prefix_in, hash_len_in, hash_value, clk, rst);
-
 always@(fib_out_bit, rst, outgoing_state) begin
     case (outgoing_state)
         wait_state: begin
@@ -217,7 +214,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
             outgoing_next_state <= check_for_valid_prefix;
         end
         check_for_valid_prefix: begin
-            hashtable_value = hashTable[len][saved_hash_outgoing];
+            hashtable_value = hashTable[len][saved_hash];
             if (hashtable_value[64]) begin
                 // Valid entry, forward to output and then enter wait state for another outgoing packet
                 prefix_out <= prefix;
@@ -250,7 +247,7 @@ always @(posedge clk, rst) begin
 
     // Latch hash during get_hash state to use during next state
     if (outgoing_state == get_hash) begin
-        saved_hash_outgoing <= hash_value;
+        saved_hash <= hash_value;
     end	
 end
 endmodule
