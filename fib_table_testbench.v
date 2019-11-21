@@ -76,6 +76,7 @@ initial begin
     data_in = LOW;
 
     start_outgoing_packet_simulation = LOW;
+    start_incoming_packet_simulation = LOW;
 	#100;
 	rst = 1'b0;
 
