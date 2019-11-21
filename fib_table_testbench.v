@@ -28,7 +28,7 @@ wire [63:0] prefix_out;
 wire [5:0] len_out;
 wire clk_out;
 
-fib_table DUT (
+fib DUT (
     .pit_in_prefix(pit_in_prefix),
     .pit_in_len(pit_in_len),
     .fib_out_bit(fib_out_bit),
