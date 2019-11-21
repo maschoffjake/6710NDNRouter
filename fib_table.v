@@ -9,6 +9,7 @@ module fib(
     input [5:0] pit_in_len,
     input fib_out_bit,
     input start_send_to_pit,
+    input rejected,
 
     // DATA INPUTS
     input [5:0] data_in_len,
@@ -104,6 +105,80 @@ end
     pass the shift register data to the PIT table. Otherwise just drop it.
 */
 
+// Assign the clk to the data output, for when transferring data so that they are synced
+assign clk_out = clk;
+
+parameter send_prefix_to_pit = 1, wait_for_pit = 2, transfer_data = 3; 
+parameter size_of_data = 1024;  // Size of data in bytes
+reg [1:0] propagating_data_state;
+reg [1:0] propagating_data_next_state;
+reg [63:0] prefix_propagating;
+reg [5:0] len_propagating;
+reg [9:0] bytes_sent;
+reg [9:0] bytes_sent_next;
+
+always@(data_ready, propagating_data_state) begin
+    // Ensure no latches
+    pit_out_prefix <= 0;
+    pit_out_len <= 0;
+    prefix_ready <= 0;
+    bytes_sent_next <= 0;
+
+    case (propagating_data_state)
+        wait_state: begin
+            if (data_ready)
+                propagating_data_next_state <= send_prefix_to_pit;
+            else
+                propagating_data_next_state <= wait_state;
+        end 
+        send_prefix_to_pit: begin
+            // Send the prefix data to the PIT to see if this data was requested.
+            pit_out_prefix <= prefix_propagating;
+            pit_out_len <= len_propagating;
+            prefix_ready <= 1'b1;
+            propagating_data_next_state <= wait_for_pit;
+        end
+        wait_for_pit: begin
+
+            // Wait for either a rejection or send bit to know when to send the bit
+            if (rejected) begin     
+                // Rejection means don't transfer the data, so just go back to wait state
+                propagating_data_next_state <= wait_state;
+            end
+            else if (start_send_to_pit) begin 
+                propagating_data_next_state <= transfer_data;
+            end
+            else
+                propagating_data_next_state <= wait_for_pit;
+        end
+        transfer_data: begin
+            if (bytes_sent == size_of_data) begin
+                propagating_data_next_state <= wait_state;
+            end
+            else 
+                propagating_data_next_state <= transfer_data;
+                out_data <= data_in;
+                bytes_sent_next <= bytes_sent + 1'b1;
+        end
+    endcase
+end
+
+always@(posedge clk, rst) begin
+    if (rst)
+        propagating_data_state <= wait_state;
+    else
+        propagating_data_state <= propagating_data_next_state;
+
+    // Latch the prefix and len during wait state, so we can save for other states
+    if (propagating_data_state == wait_state) begin
+        prefix_propagating <= data_in_prefix;
+        len_propagating <= data_in_len;
+    end
+
+    // Latch the bytes sent on each clk cycle
+    bytes_sent <= bytes_sent_next;
+
+end
 
 // OUTGOING PACKET LOGIC
 
