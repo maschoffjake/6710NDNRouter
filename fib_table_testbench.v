@@ -28,6 +28,11 @@ wire [63:0] prefix_out;
 wire [5:0] len_out;
 wire clk_out;
 
+// Values used for simulation
+reg start_outgoing_packet_simulation;
+reg [63:0] prefix_value;
+reg [5:0] prefix_length;
+
 fib DUT (
     .pit_in_prefix(pit_in_prefix),
     .pit_in_len(pit_in_len),
@@ -68,8 +73,15 @@ initial begin
     data_in_prefix = LOW;
     data_ready = LOW;
     data_in = LOW;
+
+    start_outgoing_packet_simulation = LOW;
 	#100;
 	rst = 1'b0;
+
+    // Testing outgoing logic!
+    prefix_value = 64'h0000FFFF0000FFFF;
+    prefix_length = 5'd48;
+    start_outgoing_packet_simulation = HIGH;
 end
 
 initial begin
@@ -77,6 +89,19 @@ initial begin
 	clk = 1'b0;
 	#100;
 	forever #10 clk = ~clk;
+end
+
+always@(start_outgoing_packet_simulation) begin
+    if (start_outgoing_packet_simulation == HIGH) begin
+        pit_in_prefix <= prefix_value;
+        pit_in_len <= prefix_length;
+        fib_out_bit <= HIGH;
+    end
+    else begin
+        pit_in_prefix <= 64'd0;
+        pit_in_len <= 6'd0;
+        fib_out_bit <= LOW;
+    end
 end
 
 endmodule
