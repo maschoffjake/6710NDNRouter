@@ -247,6 +247,8 @@ always@(fib_out_bit, rst, outgoing_state) begin
                     len_out <= 0
                     outgoing_next_state <= wait_state;
                 end
+
+                // Return to obtaining a hash state
                 outgoing_next_state <= get_hash;
             end
         end
