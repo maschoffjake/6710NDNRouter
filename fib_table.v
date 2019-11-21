@@ -196,7 +196,7 @@ end
 // OUTGOING PACKET LOGIC
 
 // Transmit data from PIT to outgoing data paths after finding longest matching prefix
-parameter check_for_valid_prefix = 2;
+parameter check_for_valid_prefix = 2'd2;
 reg [1:0] outgoing_state;
 reg [1:0] outgoing_next_state;
 reg [63:0] prefix;
