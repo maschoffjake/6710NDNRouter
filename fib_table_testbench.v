@@ -90,6 +90,9 @@ initial begin
     prefix_value = 64'h0000FFFF0000FFFF;
     prefix_length = 5'd48;
     start_incoming_packet_simulation = HIGH;
+
+    #100;
+    start_incoming_packet_simulation = LOW;
 end
 
 initial begin
