@@ -1,32 +1,32 @@
 module fib_table_testbench ();
 
 // PIT INPUTS
-reg [63:0] pit_in_prefix,
-reg [5:0] pit_in_len,
-reg fib_out_bit,
-reg start_send_to_pit,
-reg rejected,
+reg [63:0] pit_in_prefix;
+reg [5:0] pit_in_len;
+reg fib_out_bit;
+reg start_send_to_pit;
+reg rejected;
 
 // DATA INPUTS
-reg [5:0] data_in_len,
-reg [63:0] data_in_prefix,
-reg data_ready,
-reg [7:0] data_in,
+reg [5:0] data_in_len;
+reg [63:0] data_in_prefix;
+reg data_ready;
+reg [7:0] data_in;
 
 // OVERALL INPUTS 
-reg clk,
-reg rst,
+reg clk;
+reg rst;
 
 // PIT OUTPUTS
-wire [5:0] pit_out_len,
-wire [63:0] pit_out_prefix,
-wire prefix_ready,
-wire [7:0] out_data,
+wire [5:0] pit_out_len;
+wire [63:0] pit_out_prefix;
+wire prefix_ready;
+wire [7:0] out_data;
 
 // DATA OUTPUTS
-wire [63:0] prefix_out,
-wire [5:0] len_out,
-wire clk_out
+wire [63:0] prefix_out;
+wire [5:0] len_out;
+wire clk_out;
 
 fib_table DUT (
     .pit_in_prefix(pit_in_prefix),
