@@ -126,6 +126,7 @@ always@(data_ready, propagating_data_state) begin
     pit_out_len <= 0;
     prefix_ready <= 0;
     bytes_sent_next <= 0;
+    out_data <= 0;
 
     case (propagating_data_state)
         wait_state: begin
@@ -194,6 +195,12 @@ reg [5:0] len;
 reg [64:0] hashtable_value;
 
 always@(fib_out_bit, rst, outgoing_state) begin
+    prefix_out <= 0;
+    len_out <= 0;
+    hash_prefix_in <= 0;
+    hash_len_in <= 0;
+    hashtable_value <= 0;
+
     case (outgoing_state)
         wait_state: begin
             // Wait for flag to send data out!
@@ -241,8 +248,9 @@ always @(posedge clk, rst) begin
     end
 
     // Latch hash during get_hash state to use during next state
-    if (outgoing_state == get_hash) begin
+    if (outgoing_state == get_hash)
         saved_hash <= hash_value;
-    end	
+    else 
+        saved_hash <= 0;
 end
 endmodule
