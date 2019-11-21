@@ -195,8 +195,6 @@ reg [1:0] outgoing_next_state;
 reg [63:0] prefix;
 reg [5:0] len;
 reg [64:0] hashtable_value;
-wire [9:0] hash_value;
-reg [9:0] saved_hash_outgoing;
 
 always@(fib_out_bit, rst, outgoing_state) begin
     case (outgoing_state)
