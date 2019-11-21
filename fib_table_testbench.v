@@ -30,6 +30,7 @@ wire clk_out;
 
 // Values used for simulation
 reg start_outgoing_packet_simulation;
+reg start_incoming_packet_simulation;
 reg [63:0] prefix_value;
 reg [5:0] prefix_length;
 
@@ -84,6 +85,11 @@ initial begin
     start_outgoing_packet_simulation = HIGH;
     #100;
     start_outgoing_packet_simulation = LOW;
+
+    // Testing incoming logic
+    prefix_value = 64'h0000FFFF0000FFFF;
+    prefix_length = 5'd48;
+    start_incoming_packet_simulation = HIGH;
 end
 
 initial begin
@@ -93,6 +99,7 @@ initial begin
 	forever #10 clk = ~clk;
 end
 
+// Used for simulating the outgoing logic
 always@(start_outgoing_packet_simulation) begin
     if (start_outgoing_packet_simulation == HIGH) begin
         pit_in_prefix <= prefix_value;
@@ -103,6 +110,20 @@ always@(start_outgoing_packet_simulation) begin
         pit_in_prefix <= 64'd0;
         pit_in_len <= 6'd0;
         fib_out_bit <= LOW;
+    end
+end
+
+// Used for simulating the incoming logic
+always@(start_incoming_packet_simulation) begin
+    if (start_outgoing_packet_simulation == HIGH) begin
+        data_in_prefix <= prefix_value;
+        data_in_len <= prefix_length;
+        data_ready <= HIGH;
+    end
+    else begin
+        data_in_prefix <= 64'd0;
+        data_in_len <= 6'd0;
+        data_ready <= LOW;
     end
 end
 
