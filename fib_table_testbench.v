@@ -92,20 +92,21 @@ initial begin
     prefix_value = 64'h0000FFFF0000FFFF;
     prefix_length = 6'd10;
     start_incoming_packet_simulation = HIGH;
-    #200;
-    rejected = 1;
     #100;
     start_incoming_packet_simulation = LOW;
+    #200;
+    rejected = 1;
 
     // Testing incoming logic with accepted packet
     prefix_value = 64'h0000FFFF0000FFFF;
     prefix_length = 6'd10;
     start_incoming_packet_simulation = HIGH;
     rejected = 0;
-    #200;
-    start_send_to_pit = 1;
     #100;
     start_incoming_packet_simulation = LOW;
+    #200;
+    start_send_to_pit = 1;
+
 end
 
 initial begin
