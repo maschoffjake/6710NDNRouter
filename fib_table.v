@@ -236,6 +236,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
             else begin
                 // Not a valid entry, decrement the length and get a new hash
                 len <= len - 1;
+                outgoing_next_state <= get_hash;
 
                 /* 
                     If no prefix has been found after parsing through the entire hashtable,
@@ -247,9 +248,6 @@ always@(fib_out_bit, rst, outgoing_state) begin
                     len_out <= 0
                     outgoing_next_state <= wait_state;
                 end
-
-                // Return to obtaining a hash state
-                outgoing_next_state <= get_hash;
             end
         end
         default:
