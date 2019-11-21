@@ -40,7 +40,7 @@ fib_table DUT (
     .data_ready(data_ready),
     .data_in(data_in),
 
-    .clk(clk)
+    .clk(clk),
     .rst(rst),
 
     .pit_out_len(pit_out_len),
