@@ -28,7 +28,8 @@ module fib(
     output reg [7:0] out_data,
 
     // DATA OUTPUTS
-    output reg [63:0] prefix_out,
+    output reg [63:0] longest_matching_prefix,
+    output reg [63:0] total_content,
     output reg [5:0] len_out,
     output clk_out
 );
@@ -205,7 +206,7 @@ reg [64:0] hashtable_value;
 
 always@(fib_out_bit, rst, outgoing_state) begin
     // Ensure no latches
-    prefix_out <= 0;
+    longest_matching_prefix <= 0;
     len_out <= 0;
     hash_prefix_in <= 0;
     hash_len_in <= 0;
@@ -229,7 +230,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
             hashtable_value = hashTable[len][saved_hash];
             if (hashtable_value[64]) begin
                 // Valid entry, forward to output and then enter wait state for another outgoing packet
-                prefix_out <= prefix;
+                longest_matching_prefix <= prefix;
                 len_out <= len;
                 outgoing_next_state <= wait_state;
             end
@@ -244,7 +245,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
                     just broadcast/send to root NDN router
                 */
                 if (len == 0) begin
-                    prefix_out <= prefix;
+                    longest_matching_prefix <= prefix;
                     len_out <= 0;
                     outgoing_next_state <= wait_state;
                 end
@@ -266,6 +267,7 @@ always @(posedge clk, rst) begin
     if (outgoing_state == wait_state) begin
         prefix <= pit_in_prefix;
         len <= pit_in_len;
+        total_content <= pit_in_prefix;
     end
 
     // Latch hash during get_hash state to use during next state
