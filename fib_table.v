@@ -39,6 +39,15 @@ module fib(
 */
 reg [9:0] hashTable[5:0];
 
+// Used to reset the hashtable on reset
+integer i;
+always@(posedge rst)
+  begin
+    if (rst) 
+        for (i=0; i<64; i=i+1) 
+            hashTable[i] <= 10'b0000000000;
+  end
+
 /*
     Create a hashing unit in order to hash items. Creating its own hashing unit so we don't 
     run into resources attempting to use the same hashing unit at the same time. Only need one
@@ -195,6 +204,7 @@ reg [5:0] len;
 reg [64:0] hashtable_value;
 
 always@(fib_out_bit, rst, outgoing_state) begin
+    // Ensure no latches
     prefix_out <= 0;
     len_out <= 0;
     hash_prefix_in <= 0;
