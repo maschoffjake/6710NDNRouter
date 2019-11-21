@@ -24,8 +24,8 @@ wire prefix_ready;
 wire [7:0] out_data;
 
 // DATA OUTPUTS
-wire [63:0] prefix_out;
-wire [5:0] len_out;
+wire [63:0] longest_matching_prefix;
+wire [5:0] longest_matching_prefix_len;
 wire clk_out;
 
 // Values used for simulation
@@ -53,8 +53,8 @@ fib DUT (
     .prefix_ready(prefix_ready),
     .out_data(out_data),
 
-    .prefix_out(prefix_out),
-    .len_out(len_out),
+    .longest_matching_prefix(longest_matching_prefix),
+    .longest_matching_prefix_len(longest_matching_prefix_len),
     .clk_out(clk_out)
 );
 

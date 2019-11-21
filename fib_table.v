@@ -29,8 +29,7 @@ module fib(
 
     // DATA OUTPUTS
     output reg [63:0] longest_matching_prefix,
-    output reg [63:0] total_content,
-    output reg [5:0] len_out,
+    output reg [5:0] longest_matching_prefix_len,
     output clk_out
 );
 
@@ -231,7 +230,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
             if (hashtable_value[64]) begin
                 // Valid entry, forward to output and then enter wait state for another outgoing packet
                 longest_matching_prefix <= prefix;
-                len_out <= len;
+                longest_matching_prefix_len <= len;
                 outgoing_next_state <= wait_state;
             end
             else begin
@@ -246,7 +245,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
                 */
                 if (len == 0) begin
                     longest_matching_prefix <= prefix;
-                    len_out <= 0;
+                    longest_matching_prefix_len <= 0;
                     outgoing_next_state <= wait_state;
                 end
             end
@@ -267,7 +266,6 @@ always @(posedge clk, rst) begin
     if (outgoing_state == wait_state) begin
         prefix <= pit_in_prefix;
         len <= pit_in_len;
-        total_content <= pit_in_prefix;
     end
 
     // Latch hash during get_hash state to use during next state
