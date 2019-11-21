@@ -120,7 +120,7 @@ end
 
 // Used for simulating the incoming logic
 always@(start_incoming_packet_simulation) begin
-    if (start_outgoing_packet_simulation == HIGH) begin
+    if (start_incoming_packet_simulation == HIGH) begin
         data_in_prefix <= prefix_value;
         data_in_len <= prefix_length;
         data_ready <= HIGH;
