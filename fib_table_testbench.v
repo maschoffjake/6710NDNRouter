@@ -84,8 +84,9 @@ initial begin
     prefix_value = 64'h0000FFFF0000FFFF;
     prefix_length = 5'd48;
     start_outgoing_packet_simulation = HIGH;
-    #2000;
+    #20;
     start_outgoing_packet_simulation = LOW;
+    #1000;
 
     // Testing incoming logic
     prefix_value = 64'h0000FFFF0000FFFF;
