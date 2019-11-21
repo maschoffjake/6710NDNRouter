@@ -45,7 +45,7 @@ reg [9:0] hashTable[5:0];
     hashing unit for the FIB since outgoing and incoming packets won't collide.
 */
 reg [63:0] hash_prefix_in;
-reg [9:0] hash_len_in;
+reg [5:0] hash_len_in;
 reg [9:0] saved_hash;
 wire [9:0] hash_value;
 hash HASH_INCOMING(hash_prefix_in, hash_len_in, hash_value, clk, rst);
