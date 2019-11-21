@@ -33,7 +33,7 @@ module fib(
     // DATA OUTPUTS
     output reg [63:0] prefix_out,
     output reg [5:0] len_out,
-    output reg clk_out,
+    output clk_out,
 
     // HASH OUTPUTS
     output reg [63:0] hash_prefix_in,
