@@ -82,7 +82,7 @@ initial begin
 
     // Testing outgoing logic!
     prefix_value = 64'h0000FFFF0000FFFF;
-    prefix_length = 6'd48;
+    prefix_length = 6'd10;
     start_outgoing_packet_simulation = HIGH;
     #20;
     start_outgoing_packet_simulation = LOW;
@@ -90,7 +90,7 @@ initial begin
 
     // Testing incoming logic
     prefix_value = 64'h0000FFFF0000FFFF;
-    prefix_length = 6'd48;
+    prefix_length = 6'd10;
     start_incoming_packet_simulation = HIGH;
 
     #100;
