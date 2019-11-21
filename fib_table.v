@@ -65,7 +65,7 @@ hash HASH_INCOMING(hash_prefix_in, hash_len_in, hash_value, clk, rst);
 /* 
     Saving logic. Used for saving the incoming prefix data to the fib hash table.
 */
-parameter wait_state = 0, get_hash = 1,  save_to_fib_table = 2;
+parameter wait_state = 2'd0, get_hash = 2'd1,  save_to_fib_table = 2'd2;
 reg [1:0] saving_logic_state;
 reg [1:0] saving_logic_next_state;
 reg [63:0] prefix_saving;
