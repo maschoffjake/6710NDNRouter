@@ -33,11 +33,7 @@ module fib(
     // DATA OUTPUTS
     output reg [63:0] prefix_out,
     output reg [5:0] len_out,
-    output clk_out,
-
-    // HASH OUTPUTS
-    output reg [63:0] hash_prefix_in,
-    output reg [5:0] hash_len_in
+    output clk_out
 );
 
 /*
@@ -57,13 +53,14 @@ reg [1:0] saving_logic_state;
 reg [1:0] saving_logic_next_state;
 reg [63:0] prefix_saving;
 reg [5:0] len_saving;
-reg [9:0] saving_logic_hash;
+wire [9:0] saving_logic_hash;
+reg [9:0] saved_hash;
 
 /*
     Create a hashing unit in order to hash items. Creating its own hashing unit so we don't 
     run into resources attempting to use the same hashing unit at the same time.
 */
-hash HASH_INCOMING(pre_hash, len, hash, clk, rst);
+hash HASH_INCOMING(hash_prefix_in, hash_len_in, saving_logic_hash, clk, rst);
 
 always@(data_ready, saving_logic_state) begin
     case (saving_logic_state)
@@ -80,7 +77,7 @@ always@(data_ready, saving_logic_state) begin
         end
         save_to_fib_table: begin
             // Set the valid bit high
-            hashTable[len_saving][saving_logic_hash] = 1'b1;
+            hashTable[len_saving][saved_hash] = 1'b1;
             saving_logic_next_state = wait_state;
         end
         default:
@@ -102,7 +99,7 @@ always@(posedge clk, rst) begin
 
     // Latch hash value after sending to values to hash table
     if (saving_logic_state == get_hash) begin
-        saving_logic_hash <= hash;
+        saved_hash <= saving_logic_hash;
     end
 end
 
@@ -192,16 +189,17 @@ end
 parameter check_for_valid_prefix = 2;
 reg [1:0] outgoing_state;
 reg [1:0] outgoing_next_state;
-wire [9:0] hash_value;
 reg [63:0] prefix;
 reg [5:0] len;
 reg [64:0] hashtable_value;
+wire [9:0] hash_value;
+reg [9:0] saved_hash_outgoing;
 
 /*
     Create a hashing unit in order to hash items. Creating its own hashing unit so we don't 
     run into resources attempting to use the same hashing unit at the same time.
 */
-hash HASH_OUTGOING(pre_hash, len, hash_value, clk, rst);
+hash HASH_OUTGOING(hash_prefix_in, hash_len_in, hash_value, clk, rst);
 
 always@(fib_out_bit, rst, outgoing_state) begin
     case (outgoing_state)
@@ -219,7 +217,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
             outgoing_next_state <= check_for_valid_prefix;
         end
         check_for_valid_prefix: begin
-            hashtable_value = hashTable[len][hash_value];
+            hashtable_value = hashTable[len][saved_hash_outgoing];
             if (hashtable_value[64]) begin
                 // Valid entry, forward to output and then enter wait state for another outgoing packet
                 prefix_out <= prefix;
@@ -252,7 +250,7 @@ always @(posedge clk, rst) begin
 
     // Latch hash during get_hash state to use during next state
     if (outgoing_state == get_hash) begin
-        hash_value <= hash;
+        saved_hash_outgoing <= hash_value;
     end	
 end
 endmodule
