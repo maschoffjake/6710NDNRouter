@@ -94,8 +94,9 @@ initial begin
     start_incoming_packet_simulation = HIGH;
     #100;
     start_incoming_packet_simulation = LOW;
-    #200;
+    #100;
     rejected = 1;
+    #100;
 
     // Testing incoming logic with accepted packet
     prefix_value = 64'h0000FFFF0000FFFF;
