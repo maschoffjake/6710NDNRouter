@@ -236,6 +236,17 @@ always@(fib_out_bit, rst, outgoing_state) begin
             else begin
                 // Not a valid entry, decrement the length and get a new hash
                 len <= len - 1;
+
+                /* 
+                    If no prefix has been found after parsing through the entire hashtable,
+                    just forward a length of 0 so the interface knows that no prefix was found and
+                    just broadcast/send to root NDN router
+                */
+                if (len == 0) begin
+                    prefix_out <= prefix;
+                    len_out <= 0
+                    outgoing_next_state <= wait_state;
+                end
                 outgoing_next_state <= get_hash;
             end
         end
