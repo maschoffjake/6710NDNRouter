@@ -1,12 +1,13 @@
-module pit_hash_table(prefix, len, in_bit, out_bit, clk, rst, table_entry, pit_in_bit);
+module pit_hash_table(prefix, len, prefix_ready, out_bit, clk, rst, table_entry, pit_in_bit, rejected);
 input [63:0]prefix;
 input [4:0]len;
-input in_bit;
+input prefix_ready;
 input out_bit;
 input clk;
 input rst;
-output reg table_entry;
+output reg [63:0] table_entry;
 output reg pit_in_bit;
+output reg rejected;
 
 reg [63:0] cache [1023:0]; //Hash table with 1024 entries
 reg [61:0] current_address;
@@ -16,28 +17,34 @@ reg [4:0] state;
 reg [4:0] next_state;
 parameter reset = 0, idle = 1, get_hash = 2;
 wire [9:0]hash;
-reg [61:0] pre_hash;
+reg [63:0] pre_hash;
 
-always @(state, out_bit, in_bit) begin
+always @(state, out_bit, prefix_ready) begin
 	case (state)
 		reset: begin
 			current_address <= 0;
+			rejected <= 0;
 			next_state <= idle;
 			pre_hash <= 0;
 			pit_in_bit <= 0;
+			table_entry <= 0;
 			for(ii = 0; ii < 1024; ii=ii+1)
 				cache[ii] <= 0;
 		end
 		idle: begin
-			if(in_bit || out_bit) begin
+			if(prefix_ready || out_bit) begin
+				table_entry <= 0;
 				pit_in_bit <= 0;
-				pre_hash <= prefix[61:0];
+				pre_hash <= prefix;
 				next_state <= get_hash;
 			end
 		end
 		get_hash: begin
 			if(cache[hash][63]) begin
-				table_entry <= cache[hash];
+				if(prefix_ready) begin
+					cache[hash][62] <= 1;
+				end
+				table_entry <= cache[hash][63:0];
 				pit_in_bit <= 1;
 				next_state <= idle;
 			end
@@ -46,11 +53,12 @@ always @(state, out_bit, in_bit) begin
 					cache[hash][61:0] = current_address;
 					current_address = current_address + block_size;
 					cache[hash][63] = 1;
-					table_entry = cache[hash];
+					table_entry = cache[hash][63:0];
 					pit_in_bit = 1;
 					next_state = idle;
 				end
 				else begin
+					rejected <= 1;
 					next_state <= idle;
 				end
 			end

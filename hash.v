@@ -13,7 +13,7 @@ integer ii;
 always@(state, data) begin
 	case(state)
 		reset: begin
-			hash <= 0;
+			hash <= 10'd0;
 			hfunction[0] <= 10'b0110110101;
 			hfunction[1] <= 10'b0000100000;
 			hfunction[2] <= 10'b0101101001;
@@ -81,9 +81,12 @@ always@(state, data) begin
 			next_state <= hashing;
 		end
 		hashing: begin
-			hash = 0;
-			for(ii=0; ii<len; ii=ii+1)
-				hash = hash ^ (hfunction[ii] & data[ii]);
+			hash = 10'd0;
+			for(ii=0; ii<64; ii=ii+1) begin
+				if(data[ii]) begin
+					hash = hash ^ hfunction[ii];
+				end
+			end
 		end
 	endcase
 end

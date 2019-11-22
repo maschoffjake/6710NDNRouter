@@ -4,26 +4,29 @@ reg [4:0] len;
 wire [9:0] hash;
 reg clk;
 reg rst;
-
+integer ii;
 initial begin
 	clk = 0;
 	rst = 1;
 	#50
 	rst = 0;
-	len = 1;
-	pre_hash = 1'b1;
+	
+	for(ii = 0; ii < 1000; ii=ii+1) begin
+		len = 5'd63;
+		pre_hash = ii;
+		#1
+		$display("%d = %x", ii, hash);
+		
+	end
+	/*len = 5'd2;
+	pre_hash = 64'd2;
 	#50
 	$display("%b", hash);
 	#50
 	len = 2;
-	pre_hash = 2'b10;
+	pre_hash = 64'd3;
 	#50
-	$display("%b", hash);
-	#50
-	len = 2;
-	pre_hash = 2'b11;
-	#50
-	$display("%b", hash);
+	$display("%b", hash);*/
 
 end
 
