@@ -87,6 +87,7 @@ end
 always@(posedge clk, posedge rst) begin
     if (rst) begin
         // Reset hash table values to all 0
+        integer i;
         for (i=0; i<64; i=i+1) 
             hashTable[i] <= 10'b0000000000;
         saving_logic_state <= wait_state;
