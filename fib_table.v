@@ -129,7 +129,7 @@ reg [5:0] len_propagating;
 reg [9:0] bytes_sent;
 reg [9:0] bytes_sent_next;
 
-always@(data_ready, propagating_data_state, rejected, start_send_to_pit) begin
+always@(data_ready, propagating_data_state, rejected, start_send_to_pit, bytes_sent) begin
     // Ensure no latches
     pit_out_prefix <= 0;
     pit_out_len <= 0;
