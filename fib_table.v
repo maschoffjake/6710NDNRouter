@@ -83,19 +83,19 @@ always@(data_ready, saving_logic_state) begin
         get_hash: begin
             hash_prefix_in <= prefix_saving;
             hash_len_in <= len_saving;
-            saving_logic_next_state = save_to_fib_table;
+            saving_logic_next_state <= save_to_fib_table;
         end
         save_to_fib_table: begin
             // Set the valid bit high
-            hashTable[len_saving][saved_hash] = 1'b1;
-            saving_logic_next_state = wait_state;
+            hashTable[len_saving][saved_hash] <= 1'b1;
+            saving_logic_next_state <= wait_state;
         end
         default:
-            saving_logic_next_state = wait_state;
+            saving_logic_next_state <= wait_state;
     endcase
 end
 
-always@(posedge clk, rst) begin
+always@(posedge clk, posedge rst) begin
     if (rst)
         saving_logic_state <= wait_state;
     else
@@ -180,7 +180,7 @@ always@(data_ready, propagating_data_state, rejected, start_send_to_pit, bytes_s
     endcase
 end
 
-always@(posedge clk, rst) begin
+always@(posedge clk, posedge rst) begin
     if (rst)
         propagating_data_state <= wait_state;
     else
@@ -230,7 +230,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
             outgoing_next_state <= check_for_valid_prefix;
         end
         check_for_valid_prefix: begin
-            hashtable_value = hashTable[len][saved_hash];
+            hashtable_value <= hashTable[len][saved_hash];
             if (hashtable_value) begin
                 // Valid entry, forward to output and then enter wait state for another outgoing packet
                 longest_matching_prefix <= prefix;
@@ -259,7 +259,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
     endcase
 end
 
-always @(posedge clk, rst) begin
+always @(posedge clk, posedge rst) begin
     // Next state logic
 	if (rst)
 		outgoing_state <= 2'b00;
