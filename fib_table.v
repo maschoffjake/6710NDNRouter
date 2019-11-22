@@ -28,8 +28,9 @@ module fib(
     output reg [7:0] out_data,
 
     // DATA OUTPUTS
-    output reg [63:0] prefix_out,
-    output reg [5:0] len_out,
+    output reg [63:0] longest_matching_prefix,
+    output reg [5:0] longest_matching_prefix_len,
+    output reg ready_for_data,
     output clk_out
 );
 
@@ -121,7 +122,7 @@ end
 assign clk_out = clk;
 
 parameter send_prefix_to_pit = 1, wait_for_pit = 2, transfer_data = 3; 
-parameter size_of_data = 1024;  // Size of data in bytes
+parameter size_of_data = 1023;  // Size of data in bytes (1,024 bytes)
 reg [1:0] propagating_data_state;
 reg [1:0] propagating_data_next_state;
 reg [63:0] prefix_propagating;
@@ -129,13 +130,14 @@ reg [5:0] len_propagating;
 reg [9:0] bytes_sent;
 reg [9:0] bytes_sent_next;
 
-always@(data_ready, propagating_data_state) begin
+always@(data_ready, propagating_data_state, rejected, start_send_to_pit, bytes_sent) begin
     // Ensure no latches
     pit_out_prefix <= 0;
     pit_out_len <= 0;
     prefix_ready <= 0;
     bytes_sent_next <= 0;
     out_data <= 0;
+    ready_for_data <= 0;
 
     case (propagating_data_state)
         wait_state: begin
@@ -152,7 +154,6 @@ always@(data_ready, propagating_data_state) begin
             propagating_data_next_state <= wait_for_pit;
         end
         wait_for_pit: begin
-
             // Wait for either a rejection or send bit to know when to send the bit
             if (rejected) begin     
                 // Rejection means don't transfer the data, so just go back to wait state
@@ -160,13 +161,16 @@ always@(data_ready, propagating_data_state) begin
             end
             else if (start_send_to_pit) begin 
                 propagating_data_next_state <= transfer_data;
+                ready_for_data <= 1'b1;
             end
-            else
+            else begin
                 propagating_data_next_state <= wait_for_pit;
+            end
         end
         transfer_data: begin
             if (bytes_sent == size_of_data) begin
                 propagating_data_next_state <= wait_state;
+                bytes_sent_next <= 0;
             end
             else 
                 propagating_data_next_state <= transfer_data;
@@ -205,8 +209,8 @@ reg [64:0] hashtable_value;
 
 always@(fib_out_bit, rst, outgoing_state) begin
     // Ensure no latches
-    prefix_out <= 0;
-    len_out <= 0;
+    longest_matching_prefix <= 0;
+    longest_matching_prefix_len <= 0;
     hash_prefix_in <= 0;
     hash_len_in <= 0;
     hashtable_value <= 0;
@@ -229,8 +233,8 @@ always@(fib_out_bit, rst, outgoing_state) begin
             hashtable_value = hashTable[len][saved_hash];
             if (hashtable_value[64]) begin
                 // Valid entry, forward to output and then enter wait state for another outgoing packet
-                prefix_out <= prefix;
-                len_out <= len;
+                longest_matching_prefix <= prefix;
+                longest_matching_prefix_len <= len;
                 outgoing_next_state <= wait_state;
             end
             else begin
@@ -244,8 +248,8 @@ always@(fib_out_bit, rst, outgoing_state) begin
                     just broadcast/send to root NDN router
                 */
                 if (len == 0) begin
-                    prefix_out <= prefix;
-                    len_out <= 0
+                    longest_matching_prefix <= prefix;
+                    longest_matching_prefix_len <= 0;
                     outgoing_next_state <= wait_state;
                 end
             end

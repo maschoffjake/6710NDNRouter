@@ -24,12 +24,14 @@ wire prefix_ready;
 wire [7:0] out_data;
 
 // DATA OUTPUTS
-wire [63:0] prefix_out;
-wire [5:0] len_out;
+wire [63:0] longest_matching_prefix;
+wire [5:0] longest_matching_prefix_len;
+wire ready_for_data;
 wire clk_out;
 
 // Values used for simulation
 reg start_outgoing_packet_simulation;
+reg start_incoming_packet_simulation;
 reg [63:0] prefix_value;
 reg [5:0] prefix_length;
 
@@ -53,8 +55,9 @@ fib DUT (
     .prefix_ready(prefix_ready),
     .out_data(out_data),
 
-    .prefix_out(prefix_out),
-    .len_out(len_out),
+    .longest_matching_prefix(longest_matching_prefix),
+    .longest_matching_prefix_len(longest_matching_prefix_len),
+    .ready_for_data(ready_for_data),
     .clk_out(clk_out)
 );
 
@@ -75,13 +78,38 @@ initial begin
     data_in = LOW;
 
     start_outgoing_packet_simulation = LOW;
+    start_incoming_packet_simulation = LOW;
 	#100;
 	rst = 1'b0;
 
     // Testing outgoing logic!
     prefix_value = 64'h0000FFFF0000FFFF;
-    prefix_length = 5'd48;
+    prefix_length = 6'd10;
     start_outgoing_packet_simulation = HIGH;
+    #20;
+    start_outgoing_packet_simulation = LOW;
+    #1000;
+
+    // Testing incoming logic with rejection
+    prefix_value = 64'h0000FFFF0000FFFF;
+    prefix_length = 6'd10;
+    start_incoming_packet_simulation = HIGH;
+    #100;
+    start_incoming_packet_simulation = LOW;
+    #100;
+    rejected = 1;
+    #100;
+
+    // Testing incoming logic with accepted packet
+    prefix_value = 64'h0000FFFF0000FFFF;
+    prefix_length = 6'd10;
+    start_incoming_packet_simulation = HIGH;
+    rejected = 0;
+    #100;
+    start_incoming_packet_simulation = LOW;
+    #200;
+    start_send_to_pit = 1;
+
 end
 
 initial begin
@@ -91,6 +119,7 @@ initial begin
 	forever #10 clk = ~clk;
 end
 
+// Used for simulating the outgoing logic
 always@(start_outgoing_packet_simulation) begin
     if (start_outgoing_packet_simulation == HIGH) begin
         pit_in_prefix <= prefix_value;
@@ -101,6 +130,20 @@ always@(start_outgoing_packet_simulation) begin
         pit_in_prefix <= 64'd0;
         pit_in_len <= 6'd0;
         fib_out_bit <= LOW;
+    end
+end
+
+// Used for simulating the incoming logic
+always@(start_incoming_packet_simulation) begin
+    if (start_incoming_packet_simulation == HIGH) begin
+        data_in_prefix <= prefix_value;
+        data_in_len <= prefix_length;
+        data_ready <= HIGH;
+    end
+    else begin
+        data_in_prefix <= 64'd0;
+        data_in_len <= 6'd0;
+        data_ready <= LOW;
     end
 end
 
