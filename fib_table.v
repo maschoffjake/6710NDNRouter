@@ -161,8 +161,9 @@ always@(data_ready, propagating_data_state) begin
             else if (start_send_to_pit) begin 
                 propagating_data_next_state <= transfer_data;
             end
-            else
+            else begin
                 propagating_data_next_state <= wait_for_pit;
+            end
         end
         transfer_data: begin
             if (bytes_sent == size_of_data) begin
