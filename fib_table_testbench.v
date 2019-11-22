@@ -109,7 +109,16 @@ initial begin
     start_incoming_packet_simulation = LOW;
     #200;
     start_send_to_pit = 1;
+    #100;
+    start_send_to_pit = 0;
 
+    // Testing outgoing logic, should get a cache hit!
+    prefix_value = 64'h0000FFFF0000FFFF;
+    prefix_length = 6'd10;
+    start_outgoing_packet_simulation = HIGH;
+    #20;
+    start_outgoing_packet_simulation = LOW;
+    #1000;
 end
 
 initial begin
