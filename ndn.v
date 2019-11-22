@@ -93,7 +93,7 @@ fib fib_module (
     .clk_out                        (clk_out)  // output 
 );
 
-single_port_ram_module ram(
+single_port_ram ram(
 	.data   (out_data), // input [7:0] 
 	.addr   (address), // input [5:0] 
 	.we     (write_enable), // input 
