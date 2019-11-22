@@ -271,9 +271,10 @@ always @(posedge clk, posedge rst) begin
         outgoing_state <= outgoing_next_state;
     end
     // Latch hash during get_hash state to use during next state
-    else if (outgoing_state == get_hash)
+    else if (outgoing_state == get_hash) begin
         saved_hash <= hash_value;
         outgoing_state <= outgoing_next_state;
+    end
 	else
 		outgoing_state <= outgoing_next_state;
 
