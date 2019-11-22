@@ -26,12 +26,12 @@ wire [7:0] out_data;
 // DATA OUTPUTS
 wire [63:0] longest_matching_prefix;
 wire [5:0] longest_matching_prefix_len;
+wire ready_for_data;
 wire clk_out;
 
 // Values used for simulation
 reg start_outgoing_packet_simulation;
 reg start_incoming_packet_simulation;
-reg ready_for_data;
 reg [63:0] prefix_value;
 reg [5:0] prefix_length;
 
