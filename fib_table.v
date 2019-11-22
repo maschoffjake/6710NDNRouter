@@ -95,10 +95,6 @@ always@(data_ready, saving_logic_state) begin
 end
 
 always@(posedge clk, posedge rst) begin
-    if (rst)
-        saving_logic_state <= wait_state;
-    else
-        saving_logic_state <= saving_logic_next_state;
 
     // Latch the prefix and len during wait state, so we can save for other states
     if (saving_logic_state == wait_state) begin
@@ -107,9 +103,14 @@ always@(posedge clk, posedge rst) begin
     end
 
     // Latch hash value after sending to values to hash table
-    if (saving_logic_state == get_hash) begin
+    if (saving_logic_state == get_hash)
         saved_hash <= hash_value;
-    end
+
+    if (rst)
+        saving_logic_state <= wait_state;
+    else
+        saving_logic_state <= saving_logic_next_state;
+
 end
 
 /* 
