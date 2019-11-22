@@ -152,7 +152,6 @@ always@(data_ready, propagating_data_state) begin
             propagating_data_next_state <= wait_for_pit;
         end
         wait_for_pit: begin
-
             // Wait for either a rejection or send bit to know when to send the bit
             if (rejected) begin     
                 // Rejection means don't transfer the data, so just go back to wait state
