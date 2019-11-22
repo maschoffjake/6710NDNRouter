@@ -19,8 +19,6 @@ parameter RECEIVING_PIT = 3'b001;
 parameter RECEIVING_FIB = 3'b010;
 parameter MEMORY_IN = 3'b011;
 parameter MEMORY_OUT = 3'b100;
-parameter MEMORY_WRITE = 3'b101;
-parameter SENDING_FIB = 3'b110;
 parameter RESET = 3'b111;
 parameter received_bit = 62;
 
@@ -94,12 +92,6 @@ begin
 		end
 	end
 
-	MEMORY_WRITE:
-	begin
-	end
-	SENDING_FIB:
-	begin
-	end
 	RESET:
 	begin
 		fib_out <= 0;
