@@ -95,19 +95,20 @@ always@(data_ready, saving_logic_state) begin
 end
 
 always@(posedge clk, posedge rst) begin
-
+    if (rst)
+        saving_logic_state <= wait_state;
     // Latch the prefix and len during wait state, so we can save for other states
-    if (saving_logic_state == wait_state) begin
+    else if (saving_logic_state == wait_state) begin
         prefix_saving <= data_in_prefix;
         len_saving <= data_in_len;
+        saving_logic_state <= saving_logic_next_state;
     end
 
     // Latch hash value after sending to values to hash table
-    if (saving_logic_state == get_hash)
+    else if (saving_logic_state == get_hash) begin
+        saving_logic_state <= saving_logic_next_state;
         saved_hash <= hash_value;
-
-    if (rst)
-        saving_logic_state <= wait_state;
+    end
     else
         saving_logic_state <= saving_logic_next_state;
 
@@ -183,14 +184,14 @@ end
 always@(posedge clk, posedge rst) begin
     if (rst)
         propagating_data_state <= wait_state;
-    else
-        propagating_data_state <= propagating_data_next_state;
-
     // Latch the prefix and len during wait state, so we can save for other states
-    if (propagating_data_state == wait_state) begin
+    else if (propagating_data_state == wait_state) begin
         prefix_propagating <= data_in_prefix;
         len_propagating <= data_in_len;
+        propagating_data_state <= propagating_data_next_state;
     end
+    else
+        propagating_data_state <= propagating_data_next_state;
 
     // Latch the bytes sent on each clk cycle
     bytes_sent <= bytes_sent_next;
@@ -263,19 +264,18 @@ always @(posedge clk, posedge rst) begin
     // Next state logic
 	if (rst)
 		outgoing_state <= 2'b00;
+    // Latch the prefix and len during wait state, so we can save for other states
+    else if (outgoing_state == wait_state) begin
+        prefix <= pit_in_prefix;
+        len <= pit_in_len;
+        outgoing_state <= outgoing_next_state;
+    end
+    // Latch hash during get_hash state to use during next state
+    else if (outgoing_state == get_hash)
+        saved_hash <= hash_value;
+        outgoing_state <= outgoing_next_state;
 	else
 		outgoing_state <= outgoing_next_state;
 
-    // Latch the prefix and len during wait state, so we can save for other states
-    if (outgoing_state == wait_state) begin
-        prefix <= pit_in_prefix;
-        len <= pit_in_len;
-    end
-
-    // Latch hash during get_hash state to use during next state
-    if (outgoing_state == get_hash)
-        saved_hash <= hash_value;
-    else 
-        saved_hash <= 0;
 end
 endmodule
