@@ -38,7 +38,7 @@ module fib(
     Create a 2D array where there are 64 entries (1 for each possible length of the prefix),
     where there are 1024 entries in the array. Each of these entries store a valid bit of 1
 */
-reg [9:0] hashTable[5:0];
+reg [9:0] hashTable[0:5];
 
 // Used to reset the hashtable on reset
 integer i;
