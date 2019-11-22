@@ -25,39 +25,39 @@ reg [63:0] pre_hash;
 always @(state, out_bit, prefix_ready) begin
 	case (state)
 		reset: begin
-			current_address <= 0;
-			rejected <= 0;
-			next_state <= idle;
-			pre_hash <= 0;
-			pit_in_bit <= 0;
-			table_entry <= 0;
+			current_address = 0;
+			rejected = 0;
+			next_state = idle;
+			pre_hash = 0;
+			pit_in_bit = 0;
+			table_entry = 0;
 			for(ii = 0; ii < 1024; ii=ii+1)
-				cache[ii] <= 0;
+				cache[ii] = 0;
 		end
 		idle: begin
 			if(prefix_ready || out_bit) begin
-				table_entry <= 0;
-				pit_in_bit <= 0;
+				table_entry = 0;
+				pit_in_bit = 0;
 				if(out_bit) begin
-					pre_hash <= prefix;
-					length <= len;
-					next_state <= get_hash;
+					pre_hash = prefix;
+					length = len;
+					next_state = get_hash;
 				end
 				if(prefix_ready) begin
-					pre_hash <= pit_out_prefix;
-					length <= pit_out_len;
-					next_state <= get_hash;
+					pre_hash = pit_out_prefix;
+					length = pit_out_len;
+					next_state = get_hash;
 				end
 			end
 		end
 		get_hash: begin
 			if(cache[hash][63]) begin
 				if(prefix_ready) begin
-					cache[hash][62] <= 1;
+					cache[hash][62] = 1;
 				end
-				table_entry <= cache[hash][63:0];
-				pit_in_bit <= 1;
-				next_state <= idle;
+				table_entry = cache[hash][63:0];
+				pit_in_bit = 1;
+				next_state = idle;
 			end
 			else begin
 				if(out_bit) begin
@@ -69,17 +69,17 @@ always @(state, out_bit, prefix_ready) begin
 					next_state = idle;
 				end
 				else begin
-					rejected <= 1;
-					next_state <= idle;
+					rejected = 1;
+					next_state = idle;
 				end
 			end
 		end
 		default:
-			next_state <= reset;
+			next_state = reset;
 	endcase
 end
 
-always @(posedge clk, rst) begin
+always @(posedge clk, posedge rst) begin
 	if(rst) begin
 		state <= reset;
 	end
