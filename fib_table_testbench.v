@@ -31,6 +31,7 @@ wire clk_out;
 // Values used for simulation
 reg start_outgoing_packet_simulation;
 reg start_incoming_packet_simulation;
+reg ready_for_data;
 reg [63:0] prefix_value;
 reg [5:0] prefix_length;
 
@@ -56,6 +57,7 @@ fib DUT (
 
     .longest_matching_prefix(longest_matching_prefix),
     .longest_matching_prefix_len(longest_matching_prefix_len),
+    .ready_for_data(ready_for_data),
     .clk_out(clk_out)
 );
 

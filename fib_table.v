@@ -30,6 +30,7 @@ module fib(
     // DATA OUTPUTS
     output reg [63:0] longest_matching_prefix,
     output reg [5:0] longest_matching_prefix_len,
+    output reg ready_for_data,
     output clk_out
 );
 
@@ -136,6 +137,7 @@ always@(data_ready, propagating_data_state, rejected, start_send_to_pit, bytes_s
     prefix_ready <= 0;
     bytes_sent_next <= 0;
     out_data <= 0;
+    ready_for_data <= 0;
 
     case (propagating_data_state)
         wait_state: begin
@@ -159,6 +161,7 @@ always@(data_ready, propagating_data_state, rejected, start_send_to_pit, bytes_s
             end
             else if (start_send_to_pit) begin 
                 propagating_data_next_state <= transfer_data;
+                ready_for_data <= 1'b1;
             end
             else begin
                 propagating_data_next_state <= wait_for_pit;
