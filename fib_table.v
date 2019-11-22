@@ -44,7 +44,6 @@ reg [1023:0] hashTable[63:0];
 integer i;
 always@(posedge rst)
   begin
-    if (rst) 
         for (i=0; i<64; i=i+1) 
             hashTable[i] <= 10'b0000000000;
   end
