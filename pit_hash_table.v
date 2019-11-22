@@ -1,6 +1,8 @@
-module pit_hash_table(prefix, len, prefix_ready, out_bit, clk, rst, table_entry, pit_in_bit, rejected);
+module pit_hash_table(prefix, len, pit_out_prefix, pit_out_len, prefix_ready, out_bit, clk, rst, table_entry, pit_in_bit, rejected);
 input [63:0]prefix;
 input [5:0]len;
+input [63:0] pit_out_prefix;
+input [5:0] pit_out_len;
 input prefix_ready;
 input out_bit;
 input clk;
@@ -9,6 +11,7 @@ output reg [63:0] table_entry;
 output reg pit_in_bit;
 output reg rejected;
 
+reg [5:0] length;
 reg [63:0] cache [1023:0]; //Hash table with 1024 entries
 reg [61:0] current_address;
 parameter block_size = 1024; //1024 bytes for data
@@ -35,8 +38,16 @@ always @(state, out_bit, prefix_ready) begin
 			if(prefix_ready || out_bit) begin
 				table_entry <= 0;
 				pit_in_bit <= 0;
-				pre_hash <= prefix;
-				next_state <= get_hash;
+				if(out_bit) begin
+					pre_hash <= prefix;
+					length <= len;
+					next_state <= get_hash;
+				end
+				if(prefix_ready) begin
+					pre_hash <= pit_out_prefix;
+					length <= pit_out_len;
+					next_state <= get_hash;
+				end
 			end
 		end
 		get_hash: begin
@@ -77,6 +88,6 @@ always @(posedge clk, rst) begin
 	end
 end
 
-hash H1(pre_hash, len, hash, clk, rst);
+hash H1(pre_hash, length, hash, clk, rst);
 
 endmodule
