@@ -7,6 +7,10 @@ module ndn(
     // Incoming inputs
     input [63:0] prefix,
     input [5:0] len,
+    input out_bit,
+
+    // Incoming outputs
+    output [7:0] user_data,
 
     // Outgoing inputs
     input [5:0] data_in_len,
@@ -14,65 +18,84 @@ module ndn(
     input data_ready,
     input [7:0] in_data,
 
-    // Incoming outputs
-    output [7:0] out_data,
-
     // Outgoing outputs
-    output clk,
+    output clk_out,
     output [63:0] longest_matching_prefix,
     output [5:0] longest_matching_prefix_len,
-    output ready,
+    output ready_for_data,
     output [63:0] total_content,
     output [5:0] total_content_len
 );
 
+wire pit_in_bit;            // PITHASH --> PIT
+wire prefix_ready;          // FIB --> PIT
+wire [63:0] table_entry;    // PITHASH --> PIT
+wire rejected;              // PITHASH --> FIB
+wire [61:0] address;        // PIT --> RAM
+wire [7:0] in_data;         // FIB --> PIT
+wire [7:0] read_data;       // RAM --> PIT
+wire [7:0] out_data;        // PIT --> RAM/USER
+wire write_enable;          // PIT --> RAM
+wire start_send_to_pit;     // PIT --> FIB
+wire fib_out_bit;           // PIT --> FIB
+
+assign user_data = out_data;
+
 pit_hash_table pit_hash_table_module (
-    .prefix         (), // input [63:0]
-    .len            (), // input [5:0]
-    .prefix_ready   (), // input
-    .out_bit        (), // input
-    .clk            (), // input
-    .rst            (), // input
-    .table_entry    (), // input [63:0]
-    .pit_in_bit     (), // input
-    .rejected       ()  // input
+    .prefix         (prefix), // input [63:0]
+    .len            (len), // input [5:0]
+    .prefix_ready   (prefix_ready), // input
+    .out_bit        (out_bit), // input
+    .clk            (clk), // input
+    .rst            (rst), // input
+    .table_entry    (table_entry), // output [63:0]
+    .pit_in_bit     (pit_in_bit), // output
+    .rejected       (rejected)  // output
 );
 
 PIT pit_module (
-    .table_entry    (), // input [63:0]
-    .address        (), // output [61:0]
-    .in_data        (), // input [7:0]
-    .read_data      (), // input [7:0]
-    .out_data       (), // output [7:0]
-    .write_enable   (), // output
-    .in_bit         (), // input
-    .out_bit        (), // input
-    .start_bit      (), // output
-    .fib_out        (), // output
-    .clk            (), // input
-    .reset          ()  // input
+    .table_entry    (table_entry), // input [63:0]
+    .address        (address), // output [61:0]
+    .in_data        (in_data), // input [7:0]
+    .read_data      (read_data), // input [7:0]
+    .out_data       (out_data), // output [7:0]
+    .write_enable   (write_enable), // output
+    .in_bit         (pit_in_bit), // input
+    .out_bit        (out_bit), // input
+    .start_bit      (start_send_to_pit), // output
+    .fib_out        (fib_out_bit), // output
+    .clk            (clk), // input
+    .reset          (rst)  // input
 );
 
 fib fib_module (
-    .pit_in_prefix                  (), // input [63:0] 
-    .pit_in_len                     (), // input [5:0] 
-    .fib_out_bit                    (), // input 
-    .start_send_to_pit              (), // input 
-    .rejected                       (), // input 
-    .data_in_len                    (), // input [5:0] 
-    .data_in_prefix                 (), // input [63:0] 
-    .data_ready                     (), // input 
-    .data_in                        (), // input [7:0] 
-    .clk                            (), // input 
-    .rst                            (), // input 
+    .pit_in_prefix                  (prefix), // input [63:0] 
+    .pit_in_len                     (len), // input [5:0] 
+    .fib_out_bit                    (fib_out_bit), // input 
+    .start_send_to_pit              (start_send_to_pit), // input 
+    .rejected                       (rejected), // input 
+    .data_in_len                    (data_in_len), // input [5:0] 
+    .data_in_prefix                 (data_in_prefix), // input [63:0] 
+    .data_ready                     (data_ready), // input 
+    .data_in                        (in_data), // input [7:0] 
+    .clk                            (clk), // input 
+    .rst                            (rst), // input 
     .pit_out_len                    (), // output [5:0]
     .pit_out_prefix                 (), // output [63:0] 
-    .prefix_ready                   (), // output 
-    .out_data                       (), // output [7:0] 
-    .longest_matching_prefix        (), // output [63:0] 
-    .longest_matching_prefix_len    (), // output [5:0] 
-    .ready_for_data                 (), // output 
-    .clk_out                        ()  // output 
+    .prefix_ready                   (prefix_ready), // output 
+    .out_data                       (in_data), // output [7:0] 
+    .longest_matching_prefix        (longest_matching_prefix), // output [63:0] 
+    .longest_matching_prefix_len    (longest_matching_prefix_len), // output [5:0] 
+    .ready_for_data                 (ready_for_data), // output 
+    .clk_out                        (clk_out)  // output 
 );
+
+module single_port_ram_module (
+	.data   (out_data), // input [7:0] 
+	.addr   (address), // input [5:0] 
+	.we     (write_enable), // input 
+    .clk    (clk), // input 
+	.q      (read_data) // output [7:0] 
+)
 
 endmodule
