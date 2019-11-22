@@ -234,7 +234,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
         check_for_valid_prefix: begin
             hash_row = hashTable[len];
             hashtable_value = hash_row[saved_hash];
-            if (hashtable_value[64]) begin
+            if (hashtable_value) begin
                 // Valid entry, forward to output and then enter wait state for another outgoing packet
                 longest_matching_prefix <= prefix;
                 longest_matching_prefix_len <= len;
