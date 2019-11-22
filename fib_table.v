@@ -2,7 +2,7 @@
     This module is used for creating the FIB table of the NDN router
 */
 
-module fib(
+module fib (
 
     // PIT INPUTS
     input [63:0] pit_in_prefix,
