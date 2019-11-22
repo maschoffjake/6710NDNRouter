@@ -121,7 +121,7 @@ end
 assign clk_out = clk;
 
 parameter send_prefix_to_pit = 1, wait_for_pit = 2, transfer_data = 3; 
-parameter size_of_data = 1024;  // Size of data in bytes
+parameter size_of_data = 1023;  // Size of data in bytes (1,024 bytes)
 reg [1:0] propagating_data_state;
 reg [1:0] propagating_data_next_state;
 reg [63:0] prefix_propagating;
@@ -167,6 +167,7 @@ always@(data_ready, propagating_data_state, rejected, start_send_to_pit, bytes_s
         transfer_data: begin
             if (bytes_sent == size_of_data) begin
                 propagating_data_next_state <= wait_state;
+                bytes_sent_next <= 0;
             end
             else 
                 propagating_data_next_state <= transfer_data;
