@@ -185,17 +185,15 @@ always@(posedge clk, posedge rst) begin
     if (rst)
         propagating_data_state <= wait_state;
     // Latch the prefix and len during wait state, so we can save for other states
-    else if (propagating_data_state == wait_state) begin
-        prefix_propagating <= data_in_prefix;
-        len_propagating <= data_in_len;
+    else begin
+        if (propagating_data_state == wait_state) begin
+            prefix_propagating <= data_in_prefix;
+            len_propagating <= data_in_len;
+        end
         propagating_data_state <= propagating_data_next_state;
+        // Latch the bytes sent on each clk cycle
+        bytes_sent <= bytes_sent_next;
     end
-    else
-        propagating_data_state <= propagating_data_next_state;
-
-    // Latch the bytes sent on each clk cycle
-    bytes_sent <= bytes_sent_next;
-
 end
 
 // OUTGOING PACKET LOGIC
