@@ -32,12 +32,13 @@ wire prefix_ready;          // FIB --> PIT
 wire [63:0] table_entry;    // PITHASH --> PIT
 wire rejected;              // PITHASH --> FIB
 wire [61:0] address;        // PIT --> RAM
-wire [7:0] in_data;         // FIB --> PIT
 wire [7:0] read_data;       // RAM --> PIT
 wire [7:0] out_data;        // PIT --> RAM/USER
 wire write_enable;          // PIT --> RAM
 wire start_send_to_pit;     // PIT --> FIB
 wire fib_out_bit;           // PIT --> FIB
+wire [63:0] pit_out_prefix; // FIB --> PIT
+wire [5:0] pit_out_len;     // FIB --> PIT
 
 assign user_data = out_data;
 
@@ -45,6 +46,8 @@ pit_hash_table pit_hash_table_module (
     .prefix         (prefix), // input [63:0]
     .len            (len), // input [5:0]
     .prefix_ready   (prefix_ready), // input
+    .pit_out_prefix (pit_out_prefix), 
+    .pit_out_len    (pit_out_len),
     .out_bit        (out_bit), // input
     .clk            (clk), // input
     .rst            (rst), // input
@@ -80,8 +83,8 @@ fib fib_module (
     .data_in                        (in_data), // input [7:0] 
     .clk                            (clk), // input 
     .rst                            (rst), // input 
-    .pit_out_len                    (), // output [5:0]
-    .pit_out_prefix                 (), // output [63:0] 
+    .pit_out_len                    (pit_out_len), // output [5:0]
+    .pit_out_prefix                 (pit_out_prefix), // output [63:0] 
     .prefix_ready                   (prefix_ready), // output 
     .out_data                       (in_data), // output [7:0] 
     .longest_matching_prefix        (longest_matching_prefix), // output [63:0] 
@@ -90,12 +93,12 @@ fib fib_module (
     .clk_out                        (clk_out)  // output 
 );
 
-module single_port_ram_module (
+single_port_ram_module ram(
 	.data   (out_data), // input [7:0] 
 	.addr   (address), // input [5:0] 
 	.we     (write_enable), // input 
-    .clk    (clk), // input 
+    	.clk    (clk), // input 
 	.q      (read_data) // output [7:0] 
-)
+);
 
 endmodule
