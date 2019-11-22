@@ -205,7 +205,6 @@ reg [1:0] outgoing_state;
 reg [1:0] outgoing_next_state;
 reg [63:0] prefix;
 reg [5:0] len;
-reg [1023:0] hash_row;
 reg hashtable_value;
 
 always@(fib_out_bit, rst, outgoing_state) begin
@@ -215,7 +214,6 @@ always@(fib_out_bit, rst, outgoing_state) begin
     hash_prefix_in <= 0;
     hash_len_in <= 0;
     hashtable_value <= 0;
-    hash_row <= 1024'd0;
 
     case (outgoing_state)
         wait_state: begin
@@ -232,8 +230,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
             outgoing_next_state <= check_for_valid_prefix;
         end
         check_for_valid_prefix: begin
-            hash_row = hashTable[len];
-            hashtable_value = hash_row[saved_hash];
+            hashtable_value = hashTable[len][saved_hash];
             if (hashtable_value) begin
                 // Valid entry, forward to output and then enter wait state for another outgoing packet
                 longest_matching_prefix <= prefix;
