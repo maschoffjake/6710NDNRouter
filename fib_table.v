@@ -40,15 +40,6 @@ module fib (
 */
 reg [1023:0] hashTable[63:0];
 
-// Used to reset the hashtable on reset
-integer i;
-always@(posedge rst)
-  begin
-    if (rst) 
-        for (i=0; i<64; i=i+1) 
-            hashTable[i] <= 10'b0000000000;
-  end
-
 /*
     Create a hashing unit in order to hash items. Creating its own hashing unit so we don't 
     run into resources attempting to use the same hashing unit at the same time. Only need one
@@ -83,34 +74,44 @@ always@(data_ready, saving_logic_state) begin
         get_hash: begin
             hash_prefix_in <= prefix_saving;
             hash_len_in <= len_saving;
-            saving_logic_next_state = save_to_fib_table;
+            saving_logic_next_state <= save_to_fib_table;
         end
         save_to_fib_table: begin
-            // Set the valid bit high
-            hashTable[len_saving][saved_hash] = 1'b1;
-            saving_logic_next_state = wait_state;
+            saving_logic_next_state <= wait_state;
         end
         default:
-            saving_logic_next_state = wait_state;
+            saving_logic_next_state <= wait_state;
     endcase
 end
 
-always@(posedge clk, rst) begin
-    if (rst)
+integer i;
+always@(posedge clk, posedge rst) begin
+    if (rst) begin
+        // Reset hash table values to all 0
+        for (i=0; i<64; i=i+1) 
+            hashTable[i] <= 10'b0000000000;
         saving_logic_state <= wait_state;
-    else
-        saving_logic_state <= saving_logic_next_state;
-
+    end
     // Latch the prefix and len during wait state, so we can save for other states
-    if (saving_logic_state == wait_state) begin
+    else if (saving_logic_state == wait_state) begin
         prefix_saving <= data_in_prefix;
         len_saving <= data_in_len;
+        saving_logic_state <= saving_logic_next_state;
     end
 
     // Latch hash value after sending to values to hash table
-    if (saving_logic_state == get_hash) begin
+    else if (saving_logic_state == get_hash) begin
+        saving_logic_state <= saving_logic_next_state;
         saved_hash <= hash_value;
     end
+    else if (saving_logic_state == save_to_fib_table) begin
+        // Set the valid bit high
+        hashTable[len_saving][saved_hash] <= 1'b1;
+        saving_logic_state <= saving_logic_next_state;
+    end
+    else
+        saving_logic_state <= saving_logic_next_state;
+
 end
 
 /* 
@@ -180,21 +181,19 @@ always@(data_ready, propagating_data_state, rejected, start_send_to_pit, bytes_s
     endcase
 end
 
-always@(posedge clk, rst) begin
+always@(posedge clk, posedge rst) begin
     if (rst)
         propagating_data_state <= wait_state;
-    else
-        propagating_data_state <= propagating_data_next_state;
-
     // Latch the prefix and len during wait state, so we can save for other states
-    if (propagating_data_state == wait_state) begin
-        prefix_propagating <= data_in_prefix;
-        len_propagating <= data_in_len;
+    else begin
+        if (propagating_data_state == wait_state) begin
+            prefix_propagating <= data_in_prefix;
+            len_propagating <= data_in_len;
+        end
+        propagating_data_state <= propagating_data_next_state;
+        // Latch the bytes sent on each clk cycle
+        bytes_sent <= bytes_sent_next;
     end
-
-    // Latch the bytes sent on each clk cycle
-    bytes_sent <= bytes_sent_next;
-
 end
 
 // OUTGOING PACKET LOGIC
@@ -230,7 +229,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
             outgoing_next_state <= check_for_valid_prefix;
         end
         check_for_valid_prefix: begin
-            hashtable_value = hashTable[len][saved_hash];
+            hashtable_value <= hashTable[len][saved_hash];
             if (hashtable_value) begin
                 // Valid entry, forward to output and then enter wait state for another outgoing packet
                 longest_matching_prefix <= prefix;
@@ -259,23 +258,23 @@ always@(fib_out_bit, rst, outgoing_state) begin
     endcase
 end
 
-always @(posedge clk, rst) begin
+always @(posedge clk, posedge rst) begin
     // Next state logic
 	if (rst)
 		outgoing_state <= 2'b00;
+    // Latch the prefix and len during wait state, so we can save for other states
+    else if (outgoing_state == wait_state) begin
+        prefix <= pit_in_prefix;
+        len <= pit_in_len;
+        outgoing_state <= outgoing_next_state;
+    end
+    // Latch hash during get_hash state to use during next state
+    else if (outgoing_state == get_hash) begin
+        saved_hash <= hash_value;
+        outgoing_state <= outgoing_next_state;
+    end
 	else
 		outgoing_state <= outgoing_next_state;
 
-    // Latch the prefix and len during wait state, so we can save for other states
-    if (outgoing_state == wait_state) begin
-        prefix <= pit_in_prefix;
-        len <= pit_in_len;
-    end
-
-    // Latch hash during get_hash state to use during next state
-    if (outgoing_state == get_hash)
-        saved_hash <= hash_value;
-    else 
-        saved_hash <= 0;
 end
 endmodule
