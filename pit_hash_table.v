@@ -1,6 +1,6 @@
 module pit_hash_table(prefix, len, prefix_ready, out_bit, clk, rst, table_entry, pit_in_bit, rejected);
 input [63:0]prefix;
-input [4:0]len;
+input [5:0]len;
 input prefix_ready;
 input out_bit;
 input clk;
