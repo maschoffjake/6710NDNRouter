@@ -40,14 +40,6 @@ module fib (
 */
 reg [1023:0] hashTable[63:0];
 
-// Used to reset the hashtable on reset
-integer i;
-always@(posedge rst)
-  begin
-        for (i=0; i<64; i=i+1) 
-            hashTable[i] <= 10'b0000000000;
-  end
-
 /*
     Create a hashing unit in order to hash items. Creating its own hashing unit so we don't 
     run into resources attempting to use the same hashing unit at the same time. Only need one
@@ -85,8 +77,6 @@ always@(data_ready, saving_logic_state) begin
             saving_logic_next_state <= save_to_fib_table;
         end
         save_to_fib_table: begin
-            // Set the valid bit high
-            hashTable[len_saving][saved_hash] <= 1'b1;
             saving_logic_next_state <= wait_state;
         end
         default:
@@ -95,8 +85,12 @@ always@(data_ready, saving_logic_state) begin
 end
 
 always@(posedge clk, posedge rst) begin
-    if (rst)
+    if (rst) begin
+        // Reset hash table values to all 0
+        for (i=0; i<64; i=i+1) 
+            hashTable[i] <= 10'b0000000000;
         saving_logic_state <= wait_state;
+    end
     // Latch the prefix and len during wait state, so we can save for other states
     else if (saving_logic_state == wait_state) begin
         prefix_saving <= data_in_prefix;
@@ -108,6 +102,11 @@ always@(posedge clk, posedge rst) begin
     else if (saving_logic_state == get_hash) begin
         saving_logic_state <= saving_logic_next_state;
         saved_hash <= hash_value;
+    end
+    else if (saving_logic_state == save_to_fib_table) begin
+        // Set the valid bit high
+        hashTable[len_saving][saved_hash] <= 1'b1;
+        saving_logic_state <= saving_logic_next_state;
     end
     else
         saving_logic_state <= saving_logic_next_state;
