@@ -100,7 +100,7 @@ single_port_ram ram (
 	.addr   (address),      // input [9:0] 
 	.byte   (current_byte), // input [9:0]
 	.we     (write_enable), // input 
-    	.clk    (clk),          // input 
+    .clk    (clk),          // input 
 	.rst    (rst),		// input
 	.q      (read_data)     // output [7:0] 
 );

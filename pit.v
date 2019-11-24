@@ -21,7 +21,8 @@ parameter RECEIVING_FIB = 3'b010;
 parameter MEMORY_IN = 3'b011;
 parameter MEMORY_OUT = 3'b100;
 parameter RESET = 3'b111;
-parameter received_bit = 62;
+// TODO: Is this the correct bit?
+parameter received_bit = 10;
 
 always@(posedge clk)
 begin
