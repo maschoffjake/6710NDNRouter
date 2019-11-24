@@ -95,7 +95,7 @@ fib_table fib_module (
     .clk_out                        (clk_out)  			   // output 
 );
 
-single_port_ram ram(
+single_port_ram ram (
 	.data   (out_data),     // input [7:0] 
 	.addr   (address),      // input [9:0] 
 	.byte   (current_byte), // input [9:0]
