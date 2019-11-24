@@ -73,7 +73,7 @@ PIT pit_module (
     .fib_out        (fib_out_bit)        // output
 );
 
-fib fib_module (
+fib_table fib_module (
     .pit_in_prefix                  (prefix), 			   // input [63:0] 
     .pit_in_len                     (len), 			   // input [5:0] 
     .fib_out_bit                    (fib_out_bit), 		   // input 
@@ -101,6 +101,7 @@ single_port_ram ram(
 	.byte   (current_byte), // input [9:0]
 	.we     (write_enable), // input 
     	.clk    (clk),          // input 
+	.rst    (rst),		// input
 	.q      (read_data)     // output [7:0] 
 );
 
