@@ -1,19 +1,19 @@
 # Optimization settings
 # The period has to be changed to see if the design can meet the timing constraint
-set period 30
+set period 20
 
 #  Define the names to be used by the script
-set design mips
+set design ndn
 
 # Define the directory paths
-set BASE_DIR	 [pwd]
-set RPT_DIR      "${BASE_DIR}/RPT"
-set RTL_DIR 	 "${BASE_DIR}/HDL/RTL"
-set GATE_DIR 	 "${BASE_DIR}/HDL/GATE"
-set SDF_DIR 	 "${BASE_DIR}/SDF"
-set SDC_DIR 	 "${BASE_DIR}/SDC"
-set DDC_DIR 	 "${BASE_DIR}/DDC"
-set DESIGN_LIB	 "${BASE_DIR}/DESIGN_LIBS/$design"
+set BASE_DIR	 	[pwd]
+set RPT_DIR     "${BASE_DIR}/RPT"
+set RTL_DIR 	 	"${BASE_DIR}/HDL/RTL"
+set GATE_DIR 	 	"${BASE_DIR}/HDL/GATE"
+set SDF_DIR 	 	"${BASE_DIR}/SDF"
+set SDC_DIR 	 	"${BASE_DIR}/SDC"
+set DDC_DIR 	 	"${BASE_DIR}/DDC"
+set DESIGN_LIB	"${BASE_DIR}/DESIGN_LIBS/$design"
 
 
 #Create the directories if they do no exist
@@ -51,6 +51,7 @@ puts "-i- Save elaborated design"
 write -hierarchy -format ddc -output ${DDC_DIR}/${design}_elab.ddc
 
 #  Link the design
+puts "-i- Linking the design"
 link
 
 #  Define constraints
@@ -64,11 +65,11 @@ create_clock -name "clk" -period $period clk
 check_design
 
 #  Do not ungroup the hierarchy
-set_ungroup [get_designs *] false
+#set_ungroup [get_designs *] false
 
 #  Map and optimize the design
 puts "-i- Map and optimize design"
-compile_ultra
+compile
 
 #  Save the mapped design
 puts "-i- Save mapped design"
@@ -83,15 +84,14 @@ report_power -nosplit -analysis_effort low > ${RPT_DIR}/${design}_mapped_power.r
 
 #  Generate the Verilog netlist
 puts "-i- Generate Verilog netlist"
-write -format verilog -hierarchy -output ${GATE_DIR}/${design}_mapped.v
+write_file -format verilog -hierarchy -output ${GATE_DIR}/${design}_mapped.v
 
 #  Generate the design constraint file
 puts "-i- Generate SDC design constraint file"
 write_sdc -nosplit ${SDC_DIR}/${design}_mapped.sdc
 
-#  Save the synthesized design
-puts "-i- Save synthesized design"
-write -hierarchy -format ddc -output ${DDC_DIR}/${design}_synthesized.ddc
+#  Generate the sdf file
+puts "-i- Generate the SDF file"
+write_sdf -version 2.1 ${SDF_DIR}/${design}_mapped.sdf
 
 puts "-i- Finished"
-
