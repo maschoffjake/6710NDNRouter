@@ -106,7 +106,7 @@ always@(posedge clk, posedge rst) begin
     end
     else if (saving_logic_state == save_to_fib_table) begin
         // Set the valid bit high
-        hashTable[len_saving][saved_hash] <= 1'b1;
+        hashTable[len_saving][saved_hash_in] <= 1'b1;
         saving_logic_state <= saving_logic_next_state;
     end
     else
@@ -201,7 +201,7 @@ reg [63:0] hash_prefix_out;
 reg [5:0] hash_len_out;
 reg [9:0] saved_hash_out;
 wire [9:0] hash_value_out;
-hash HASH_INCOMING(hash_prefix_out, hash_len_out, hash_value_out, clk, rst);
+hash HASH_OUTGOING(hash_prefix_out, hash_len_out, hash_value_out, clk, rst);
 
 // Transmit data from PIT to outgoing data paths after finding longest matching prefix
 parameter check_for_valid_prefix = 2'd2;
