@@ -215,8 +215,8 @@ always@(fib_out_bit, rst, outgoing_state) begin
     // Ensure no latches
     longest_matching_prefix <= 0;
     longest_matching_prefix_len <= 0;
-    hash_prefix_in <= 0;
-    hash_len_in <= 0;
+    hash_prefix_out <= 0;
+    hash_len_out <= 0;
     hashtable_value <= 0;
 
     case (outgoing_state)
