@@ -3,3 +3,11 @@
     In this set up the NDN module acts as the master, and the outgoing interface
     acts as the slave.
 */
+module (
+    output sclk,
+    output mosi,
+    input miso,
+    output ss
+);
+
+endmodule
