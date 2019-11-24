@@ -42,14 +42,14 @@ reg [1023:0] hashTable[63:0];
 
 /*
     Create a hashing unit in order to hash items. Creating its own hashing unit so we don't 
-    run into resources attempting to use the same hashing unit at the same time. Only need one
-    hashing unit for the FIB since outgoing and incoming packets won't collide.
+    run into resources attempting to use the same hashing unit at the same time. Need 2 different
+    hashing modules, one for incoming and one for outgoing.
 */
 reg [63:0] hash_prefix_in;
 reg [5:0] hash_len_in;
-reg [9:0] saved_hash;
-wire [9:0] hash_value;
-hash HASH_INCOMING(hash_prefix_in, hash_len_in, hash_value, clk, rst);
+reg [9:0] saved_hash_in;
+wire [9:0] hash_value_in;
+hash HASH_INCOMING(hash_prefix_in, hash_len_in, hash_value_in, clk, rst);
 
 
 // INCOMING PACKET LOGIC
@@ -102,7 +102,7 @@ always@(posedge clk, posedge rst) begin
     // Latch hash value after sending to values to hash table
     else if (saving_logic_state == get_hash) begin
         saving_logic_state <= saving_logic_next_state;
-        saved_hash <= hash_value;
+        saved_hash_in <= hash_value_in;
     end
     else if (saving_logic_state == save_to_fib_table) begin
         // Set the valid bit high
@@ -197,6 +197,11 @@ always@(posedge clk, posedge rst) begin
 end
 
 // OUTGOING PACKET LOGIC
+reg [63:0] hash_prefix_out;
+reg [5:0] hash_len_out;
+reg [9:0] saved_hash_out;
+wire [9:0] hash_value_out;
+hash HASH_INCOMING(hash_prefix_out, hash_len_out, hash_value_out, clk, rst);
 
 // Transmit data from PIT to outgoing data paths after finding longest matching prefix
 parameter check_for_valid_prefix = 2'd2;
@@ -224,12 +229,12 @@ always@(fib_out_bit, rst, outgoing_state) begin
         end
         get_hash: begin
             // Set hash input values
-            hash_prefix_in <= prefix;
-            hash_len_in <= len;
+            hash_prefix_out <= prefix;
+            hash_len_out <= len;
             outgoing_next_state <= check_for_valid_prefix;
         end
         check_for_valid_prefix: begin
-            hashtable_value <= hashTable[len][saved_hash];
+            hashtable_value <= hashTable[len][saved_hash_out];
             if (hashtable_value) begin
                 // Valid entry, forward to output and then enter wait state for another outgoing packet
                 longest_matching_prefix <= prefix;
@@ -270,7 +275,7 @@ always @(posedge clk, posedge rst) begin
     end
     // Latch hash during get_hash state to use during next state
     else if (outgoing_state == get_hash) begin
-        saved_hash <= hash_value;
+        saved_hash_out <= hash_value_out;
         outgoing_state <= outgoing_next_state;
     end
 	else
