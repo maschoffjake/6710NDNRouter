@@ -1,6 +1,5 @@
-module hash(data, len, hash, clk, rst);
+module hash(data, hash, clk, rst);
 input [63:0]data;
-input [5:0] len;
 input rst;
 input clk;
 output reg [9:0]hash;

@@ -1,6 +1,6 @@
 module PIT(table_entry, address, current_byte, in_data, read_data, out_data, write_enable, in_bit, out_bit, start_bit, fib_out, clk, reset);
 
-input [11:0] table_entry;
+input [10:0] table_entry;
 input [7:0] in_data, read_data;
 input in_bit, out_bit, clk, reset;
 
@@ -24,7 +24,10 @@ parameter RESET = 3'b111;
 // TODO: Is this the correct bit?
 parameter received_bit = 10;
 
-always@(posedge clk)
+always@(posedge clk, posedge reset)
+if(reset) begin
+	state <= RESET;
+end else begin
 begin
 	case(state)
 	IDLE:
@@ -105,5 +108,6 @@ begin
 		state <= RESET;
 	end
 	endcase
+end
 end
 endmodule 

@@ -1,14 +1,12 @@
-module pit_hash_table(prefix, len, pit_out_prefix, pit_out_len, prefix_ready, out_bit, clk, rst, table_entry, pit_in_bit, rejected);
+module pit_hash_table(prefix, pit_out_prefix, prefix_ready, out_bit, clk, rst, table_entry, pit_in_bit, rejected);
 input [63:0]prefix;
-input [5:0]len;
 input [63:0] pit_out_prefix;
-input [5:0] pit_out_len;
 input prefix_ready;
 input out_bit;
 input clk;
 input rst;
 
-output reg [11:0] table_entry;
+output reg [10:0] table_entry;
 output reg pit_in_bit;
 output reg rejected;
 
@@ -47,12 +45,10 @@ always @(state, out_bit, prefix_ready) begin
 				// Set values based on who raised flag
 				if(out_bit) begin
 					pre_hash = prefix;
-					length = len;
 					next_state = get_hash;
 				end
 				if(prefix_ready) begin
 					pre_hash = pit_out_prefix;
-					length = pit_out_len;
 					next_state = get_hash;
 				end
 			end
@@ -63,7 +59,7 @@ always @(state, out_bit, prefix_ready) begin
 				if(prefix_ready) begin
 					cache[hash][10] = 1;
 				end
-				table_entry = cache[hash][11:0];
+				table_entry = cache[hash][10:0];
 				pit_in_bit = 1;
 				next_state = idle;
 			end
@@ -72,7 +68,7 @@ always @(state, out_bit, prefix_ready) begin
 					cache[hash][9:0] = current_address;
 					current_address = current_address + block_size;
 					cache[hash][11] = 1;
-					table_entry = cache[hash][11:0];
+					table_entry = cache[hash][10:0];
 					pit_in_bit = 1;
 					next_state = idle;
 				end
@@ -97,6 +93,6 @@ always @(posedge clk, posedge rst) begin
 	end
 end
 
-hash H1(pre_hash, length, hash, clk, rst);
+hash H1(pre_hash, hash, clk, rst);
 
 endmodule

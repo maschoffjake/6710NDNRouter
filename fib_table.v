@@ -1,5 +1,7 @@
 /*
     This module is used for creating the FIB table of the NDN router
+    TODO: instead of sending size to the hash table, zero out the top bits
+	  of the prefix we don't want
 */
 
 module fib_table(
@@ -22,7 +24,7 @@ module fib_table(
     input rst,
 
     // PIT OUTPUTS
-    output reg [5:0] pit_out_len,
+    //output reg [5:0] pit_out_len,
     output reg [63:0] pit_out_prefix,
     output reg prefix_ready,
     output reg [7:0] out_data,
@@ -30,8 +32,7 @@ module fib_table(
     // DATA OUTPUTS
     output reg [63:0] longest_matching_prefix,
     output reg [5:0] longest_matching_prefix_len,
-    output reg ready_for_data,
-    output clk_out
+    output reg ready_for_data
 );
 
 /*
@@ -46,10 +47,9 @@ reg [1023:0] hashTable[63:0];
     hashing modules, one for incoming and one for outgoing.
 */
 reg [63:0] hash_prefix_in;
-reg [5:0] hash_len_in;
 reg [9:0] saved_hash_in;
 wire [9:0] hash_value_in;
-hash HASH_INCOMING(hash_prefix_in, hash_len_in, hash_value_in, clk, rst);
+hash HASH_INCOMING(hash_prefix_in, hash_value_in, clk, rst);
 
 
 // INCOMING PACKET LOGIC
@@ -73,7 +73,6 @@ always@(data_ready, saving_logic_state) begin
         end 
         get_hash: begin
             hash_prefix_in <= prefix_saving;
-            hash_len_in <= len_saving;
             saving_logic_next_state <= save_to_fib_table;
         end
         save_to_fib_table: begin
@@ -120,7 +119,7 @@ end
 */
 
 // Assign the clk to the data output, for when transferring data so that they are synced
-assign clk_out = clk;
+//assign clk_out = clk;
 
 parameter send_prefix_to_pit = 1, wait_for_pit = 2, transfer_data = 3; 
 parameter size_of_data = 1023;  // Size of data in bytes (1,024 bytes)
@@ -134,7 +133,7 @@ reg [9:0] bytes_sent_next;
 always@(data_ready, propagating_data_state, rejected, start_send_to_pit, bytes_sent) begin
     // Ensure no latches
     pit_out_prefix <= 0;
-    pit_out_len <= 0;
+    //pit_out_len <= 0;
     prefix_ready <= 0;
     bytes_sent_next <= 0;
     out_data <= 0;
@@ -150,7 +149,7 @@ always@(data_ready, propagating_data_state, rejected, start_send_to_pit, bytes_s
         send_prefix_to_pit: begin
             // Send the prefix data to the PIT to see if this data was requested.
             pit_out_prefix <= prefix_propagating;
-            pit_out_len <= len_propagating;
+            //pit_out_len <= len_propagating;
             prefix_ready <= 1'b1;
             propagating_data_next_state <= wait_for_pit;
         end
@@ -198,10 +197,9 @@ end
 
 // OUTGOING PACKET LOGIC
 reg [63:0] hash_prefix_out;
-reg [5:0] hash_len_out;
 reg [9:0] saved_hash_out;
 wire [9:0] hash_value_out;
-hash HASH_OUTGOING(hash_prefix_out, hash_len_out, hash_value_out, clk, rst);
+hash HASH_OUTGOING(hash_prefix_out, hash_value_out, clk, rst);
 
 // Transmit data from PIT to outgoing data paths after finding longest matching prefix
 parameter check_for_valid_prefix = 2'd2;
@@ -217,7 +215,6 @@ always@(fib_out_bit, rst, outgoing_state) begin
     longest_matching_prefix <= 0;
     longest_matching_prefix_len <= 0;
     hash_prefix_out <= 0;
-    hash_len_out <= 0;
     hashtable_value <= 0;
     next_len <= 0;
 
@@ -232,7 +229,6 @@ always@(fib_out_bit, rst, outgoing_state) begin
         get_hash: begin
             // Set hash input values
             hash_prefix_out <= prefix;
-            hash_len_out <= len;
             outgoing_next_state <= check_for_valid_prefix;
         end
         check_for_valid_prefix: begin
