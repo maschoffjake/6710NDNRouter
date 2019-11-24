@@ -24,9 +24,7 @@ analyze -library WORK -format verilog {
 /home/kenta/digital_vlsi/modelsim/PROJECTS/6710NDNRouter/hash.v 
 /home/kenta/digital_vlsi/modelsim/PROJECTS/6710NDNRouter/fib_table.v}
 
-elaborate ndn -architecture verilog -library DEFAULT
-Loading db file '/uusoc/facility/cad_common/Synopsys/syn_vK-2015.06-SP5-6/libraries/syn/gtech.db'
-Loading db file '/uusoc/facility/cad_common/Synopsys/syn_vK-2015.06-SP5-6/libraries/syn/standard.sldb'
+elaborate ndn -architecture verilog -library WORK
 
 write -hierarchy -format ddc -output /home/kenta/digital_vlsi/synopsys_dc/DDC/ndn_elab.ddc
 
