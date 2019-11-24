@@ -1,16 +1,17 @@
-module PIT(table_entry, address, in_data, read_data, out_data, write_enable, in_bit, out_bit, start_bit, fib_out, clk, reset);
+module PIT(table_entry, address, current_byte, in_data, read_data, out_data, write_enable, in_bit, out_bit, start_bit, fib_out, clk, reset);
 
 input [63:0] table_entry;
 input [7:0] in_data, read_data;
 input in_bit, out_bit, clk, reset;
 
-output reg [61:0] address;
+output reg [9:0] address;
+output reg [9:0] current_byte;
 output reg [7:0] out_data;
 output reg start_bit, write_enable, fib_out;
 
 reg [2:0] state;
-reg [63:0] pit_table_entry;
-reg [61:0] pit_address;
+reg [11:0] pit_table_entry;
+reg [9:0] pit_address;
 reg [9:0] memory_count;
 
 
@@ -42,7 +43,7 @@ begin
 		if(table_entry[received_bit])
 		begin
 			state <= MEMORY_OUT;
-			pit_address <= table_entry[61:0];
+			pit_address <= table_entry[9:0];
 			memory_count <= 0;
 		end
 		else
@@ -56,7 +57,7 @@ begin
 		memory_count <= 0;
 		write_enable <= 1;
 		start_bit <= 1;
-		pit_address <= table_entry[61:0];
+		pit_address <= table_entry[9:0];
 		state <= MEMORY_IN;
 	end
 
@@ -66,7 +67,7 @@ begin
 		begin
 			out_data <= in_data;
 			address <= pit_address;
-			pit_address <= pit_address + 1;
+			current_byte <= current_byte + 1;
 			memory_count <= memory_count + 1;
 		end
 		else
@@ -83,7 +84,7 @@ begin
 		begin
 			out_data <= read_data;
 			address <= pit_address;
-			pit_address <= pit_address + 1;
+			current_byte <= current_byte + 1;
 			memory_count <= memory_count + 1;
 		end
 		else

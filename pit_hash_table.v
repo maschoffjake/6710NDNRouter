@@ -7,6 +7,7 @@ input prefix_ready;
 input out_bit;
 input clk;
 input rst;
+
 output reg [63:0] table_entry;
 output reg pit_in_bit;
 output reg rejected;
@@ -14,16 +15,20 @@ output reg rejected;
 reg [5:0] length;
 reg [11:0] cache [1023:0]; //Hash table with 1024 entries
 reg [9:0] current_address;
-parameter block_size = 1; //1024 bytes for data
-integer ii;
 reg [4:0] state;
 reg [4:0] next_state;
-parameter reset = 0, idle = 1, get_hash = 2;
-wire [9:0]hash;
 reg [63:0] pre_hash;
+
+wire [9:0]hash;
+
+integer ii;
+
+parameter block_size = 1; //1024 bytes per address row
+parameter reset = 0, idle = 1, get_hash = 2;
 
 always @(state, out_bit, prefix_ready) begin
 	case (state)
+		// Initialize all values
 		reset: begin
 			current_address = 0;
 			rejected = 0;
@@ -34,10 +39,12 @@ always @(state, out_bit, prefix_ready) begin
 			for(ii = 0; ii < 1024; ii=ii+1)
 				cache[ii] = 0;
 		end
+		// Wait for input from User or FIB
 		idle: begin
 			if(prefix_ready || out_bit) begin
 				table_entry = 0;
 				pit_in_bit = 0;
+				// Set values based on who raised flag
 				if(out_bit) begin
 					pre_hash = prefix;
 					length = len;
@@ -50,6 +57,7 @@ always @(state, out_bit, prefix_ready) begin
 				end
 			end
 		end
+		// Hash is ready now, so get table entry or create new one
 		get_hash: begin
 			if(cache[hash][11]) begin
 				if(prefix_ready) begin
@@ -68,6 +76,7 @@ always @(state, out_bit, prefix_ready) begin
 					pit_in_bit = 1;
 					next_state = idle;
 				end
+				// If FIB got data that wasn't requested, reject
 				else begin
 					rejected = 1;
 					next_state = idle;
