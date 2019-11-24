@@ -209,6 +209,7 @@ reg [1:0] outgoing_state;
 reg [1:0] outgoing_next_state;
 reg [63:0] prefix;
 reg [5:0] len;
+reg [5:0] next_len;
 reg hashtable_value;
 
 always@(fib_out_bit, rst, outgoing_state) begin
@@ -218,6 +219,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
     hash_prefix_out <= 0;
     hash_len_out <= 0;
     hashtable_value <= 0;
+    next_len <= 0;
 
     case (outgoing_state)
         wait_state: begin
@@ -243,7 +245,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
             end
             else begin
                 // Not a valid entry, decrement the length and get a new hash
-                len <= len - 1;
+                next_len <= len - 1;
                 outgoing_next_state <= get_hash;
 
                 /* 
@@ -251,7 +253,7 @@ always@(fib_out_bit, rst, outgoing_state) begin
                     just forward a length of 0 so the interface knows that no prefix was found and
                     just broadcast/send to root NDN router
                 */
-                if (len == 0) begin
+                if (next_len == 0) begin
                     longest_matching_prefix <= prefix;
                     longest_matching_prefix_len <= 0;
                     outgoing_next_state <= wait_state;
@@ -277,6 +279,9 @@ always @(posedge clk, posedge rst) begin
     else if (outgoing_state == get_hash) begin
         saved_hash_out <= hash_value_out;
         outgoing_state <= outgoing_next_state;
+    end
+    else if (outgoing_state == transfer_data) begin
+        len <= next_len - 1;
     end
 	else
 		outgoing_state <= outgoing_next_state;
