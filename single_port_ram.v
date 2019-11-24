@@ -3,7 +3,7 @@ module single_port_ram
 	input [7:0] data,
 	input [9:0] addr,
 	input [9:0] byte,
-	input we, clk, rst
+	input we, clk, rst,
 	output [7:0] q
 );
 
