@@ -12,9 +12,9 @@ output reg pit_in_bit;
 output reg rejected;
 
 reg [5:0] length;
-reg [63:0] cache [1023:0]; //Hash table with 1024 entries
-reg [61:0] current_address;
-parameter block_size = 1024; //1024 bytes for data
+reg [11:0] cache [1023:0]; //Hash table with 1024 entries
+reg [9:0] current_address;
+parameter block_size = 1; //1024 bytes for data
 integer ii;
 reg [4:0] state;
 reg [4:0] next_state;
@@ -51,20 +51,20 @@ always @(state, out_bit, prefix_ready) begin
 			end
 		end
 		get_hash: begin
-			if(cache[hash][63]) begin
+			if(cache[hash][11]) begin
 				if(prefix_ready) begin
-					cache[hash][62] = 1;
+					cache[hash][10] = 1;
 				end
-				table_entry = cache[hash][63:0];
+				table_entry = cache[hash][11:0];
 				pit_in_bit = 1;
 				next_state = idle;
 			end
 			else begin
 				if(out_bit) begin
-					cache[hash][61:0] = current_address;
+					cache[hash][9:0] = current_address;
 					current_address = current_address + block_size;
-					cache[hash][63] = 1;
-					table_entry = cache[hash][63:0];
+					cache[hash][11] = 1;
+					table_entry = cache[hash][11:0];
 					pit_in_bit = 1;
 					next_state = idle;
 				end

@@ -2,10 +2,12 @@ module pit_hash_table_testbench();
 reg clk;
 reg [63:0]prefix;
 reg [4:0]len;
+reg [63:0]pit_out_prefix;
+reg [4:0]pit_out_len;
 reg prefix_ready;
 reg out_bit;
 reg rst;
-wire [63:0]table_entry;
+wire [11:0]table_entry;
 wire pit_in_bit;
 wire rejected;
 
@@ -48,8 +50,8 @@ initial begin
 	#100
 	out_bit = 0;
 	// Data coming in that has been requested
-	prefix = 64'b0010010011111101101111111000000010100110111011110111110110100111;
-	len = 63;
+	pit_out_prefix = 64'b0010010011111101101111111000000010100110111011110111110110100111;
+	pit_out_len = 63;
 	prefix_ready = 1;
 	#100
 	$display("Data coming in that has been requested");
@@ -58,8 +60,8 @@ initial begin
 	$display("Rejected bit: %b", rejected);
 	#100
 	// Data coming in that hasn't been requested
-	prefix = 64'b0011111111001010100111110010111111110101100011001101011001101000;
-	len = 63;
+	pit_out_prefix = 64'b0011111111001010100111110010111111110101100011001101011001101000;
+	pit_out_len = 63;
 	prefix_ready = 1;
 	#100
 	$display("Data coming in that hasn't been requested");
@@ -72,7 +74,9 @@ end
 always #10 clk = ~clk;
 
 pit_hash_table H1(.prefix(prefix), 
-		  .len(len), 
+		  .len(len),
+		  .pit_out_prefix(pit_out_prefix),
+		  .pit_out_len(pit_out_len),
 		  .prefix_ready(prefix_ready), 
 		  .out_bit(out_bit), 
 		  .clk(clk), 
