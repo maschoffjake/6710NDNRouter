@@ -19,7 +19,7 @@ module single_port_ram
 	begin
 		if(rst) begin
 			for(ii = 0; ii < 1024; ii=ii+1) begin
-				ram[ii] = 0;
+				ram[ii] <= 0;
 			end
 		end
 	// Write
