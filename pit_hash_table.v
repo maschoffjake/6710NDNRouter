@@ -8,7 +8,7 @@ input out_bit;
 input clk;
 input rst;
 
-output reg [63:0] table_entry;
+output reg [11:0] table_entry;
 output reg pit_in_bit;
 output reg rejected;
 
