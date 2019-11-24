@@ -16,23 +16,82 @@ set DDC_DIR 	 "${BASE_DIR}/DDC"
 set DESIGN_LIB	 "${BASE_DIR}/DESIGN_LIBS/$design"
 
 
-analyze -library WORK -format verilog {
-/home/kenta/digital_vlsi/modelsim/PROJECTS/6710NDNRouter/single_port_ram.v 
-/home/kenta/digital_vlsi/modelsim/PROJECTS/6710NDNRouter/pit_hash_table.v 
-/home/kenta/digital_vlsi/modelsim/PROJECTS/6710NDNRouter/pit.v 
-/home/kenta/digital_vlsi/modelsim/PROJECTS/6710NDNRouter/ndn.v 
-/home/kenta/digital_vlsi/modelsim/PROJECTS/6710NDNRouter/hash.v 
-/home/kenta/digital_vlsi/modelsim/PROJECTS/6710NDNRouter/fib_table.v}
+#Create the directories if they do no exist
+exec mkdir -p $RPT_DIR
+exec mkdir -p $DDC_DIR
+exec mkdir -p $SDF_DIR
+exec mkdir -p $SDC_DIR
+exec mkdir -p $DESIGN_LIB
 
-elaborate ndn -architecture verilog -library WORK
+#  dependency rules
+set HDL_FILES [list \
+		   $RTL_DIR/hash.v\
+		  $RTL_DIR/single_port_ram.v\
+		  $RTL_DIR/pit_hash_table.v\
+		  $RTL_DIR/pit.v\
+		  $RTL_DIR/fib_table.v\
+		  $RTL_DIR/ndn.v]
 
-write -hierarchy -format ddc -output /home/kenta/digital_vlsi/synopsys_dc/DDC/ndn_elab.ddc
+#  Start from fresh state
+remove_design -designs
 
-create_clock -name "clk" -period 30 -waveform { 0 15  }  { clk  }
+#Define a design library specific to the current design. Otherwise, when runing 2 synthesis in parallel, intermediate files get mixed.
+define_design_lib $design -path $DESIGN_LIB
 
+#  Analyze the Verilog sources
+puts "-i- Analyze Verilog sources"
+analyze -format sverilog $HDL_FILES -library $design
+
+#  Elaborate the design
+puts "-i- Elaborate design"
+elaborate ${design} -library $design
+
+#  Save the elaborated design
+puts "-i- Save elaborated design"
+write -hierarchy -format ddc -output ${DDC_DIR}/${design}_elab.ddc
+
+#  Link the design
+link
+
+#  Define constraints
+puts "-i- Define constraints"
+puts "-i- set_max_area 0"
+puts "-i- set_clock"
 set_max_area 0
+create_clock -name "clk" -period $period clk
 
-compile -exact_map
+#Check the design for warnings
+check_design
 
-# Information
-# Information: There are 126 potential problems in your design. Please run 'check_design' for more information. (LINT-99)
+#  Do not ungroup the hierarchy
+set_ungroup [get_designs *] false
+
+#  Map and optimize the design
+puts "-i- Map and optimize design"
+compile_ultra
+
+#  Save the mapped design
+puts "-i- Save mapped design"
+write -hierarchy -format ddc -output ${DDC_DIR}/${design}_mapped.ddc
+
+#  Generate reports
+puts "-i- Generate reports"
+report_constraint -nosplit -all_violators > ${RPT_DIR}/${design}_mapped_allviol.rpt
+report_area > ${RPT_DIR}/${design}_mapped_area.rpt
+report_timing > ${RPT_DIR}/${design}_mapped_timing.rpt
+report_power -nosplit -analysis_effort low > ${RPT_DIR}/${design}_mapped_power.rpt
+
+#  Generate the Verilog netlist
+puts "-i- Generate Verilog netlist"
+write -format verilog -hierarchy -output ${GATE_DIR}/${design}_mapped.v
+
+#  Generate the design constraint file
+puts "-i- Generate SDC design constraint file"
+write_sdc -nosplit ${SDC_DIR}/${design}_mapped.sdc
+
+#  Save the synthesized design
+puts "-i- Save synthesized design"
+write -hierarchy -format ddc -output ${DDC_DIR}/${design}_synthesized.ddc
+
+puts "-i- Finished"
+
