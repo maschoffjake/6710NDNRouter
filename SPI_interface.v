@@ -13,8 +13,8 @@
                     3rd - 8th bit: length of the packet prefix content header (MSB sent first)
                 2nd - 9th byte:
                     All 64-bits represent the prefix content header (MSB sent first)
-                10th - 521st byte:
-                    All 512 of these bytes represent the actual data associated with the data packet
+                10th - 266st byte:
+                    All 256 of these bytes represent the actual data associated with the data packet
 
     Interest Packet:
                 1st byte:
