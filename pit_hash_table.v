@@ -2,7 +2,7 @@ module pit_hash_table(prefix, pit_out_prefix, length, prefix_ready, out_bit, clk
 input [63:0] prefix;
 input [63:0] pit_out_prefix;
 input [7:0] pit_out_metadata;
-input [4:0] length; // Added
+input [5:0] length; // Added
 input prefix_ready;
 input out_bit;
 input clk;
@@ -50,7 +50,7 @@ always @(state, out_bit, prefix_ready) begin
 				data_packet = 0;
 				// Set values based on who raised flag
 				if(out_bit) begin
-					meta_data = (2'b00 << 6) + length;
+					meta_data = {2'b00, length};
 					pre_hash = prefix;
 					next_state = get_hash;
 				end
