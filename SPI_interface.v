@@ -166,9 +166,9 @@ reg [7:0] data_input_count;
 reg transferring_data_packet;
 
 // Save input values when flag goes high
-reg [7:0]    packet_meta_data_input_save,
-reg [63:0]   packet_prefix_input_save,
-reg [255:0]  packet_data_input_save,
+reg [7:0]    packet_meta_data_input_save;
+reg [63:0]   packet_prefix_input_save;
+reg [255:0]  packet_data_input_save;
 
 parameter send_meta_data = 1, send_prefix = 2, send_data = 3;
 reg [1:0] transmitting_state;
