@@ -39,10 +39,8 @@ module spi_interface(
     input rst,
 
     // Receiving output
-    output reg          RX_valid,  // Valid pulse for 1 cycle for RX byte to know data is ready
-    output reg [7:0]    packet_meta_data,
-    output reg [63:0]   packet_prefix,
-    output reg [255:0]  packet_data,
+    output reg          RX_valid,               // Valid pulse for 1 cycle for RX byte to know data is ready
+    output reg          output_shift_register,  // Used to send data to the FIB 
 
     // Transferring input
     input               TX_valid,                   // Valid pulse for 1 cycle for TX byte
@@ -54,6 +52,11 @@ reg [2:0] meta_data_count;
 reg [5:0] prefix_count;
 reg [7:0] data_count;
 
+// Reg's to store data to send to the fib
+reg [7:0]    packet_meta_data;
+reg [63:0]   packet_prefix;
+reg [255:0]  packet_data;
+
 // Flag for if the current packet being received is a interest/data
 reg isInterestPacket;
 
@@ -62,10 +65,15 @@ localparam HIGH = 1;
 localparam LOW = 0;
 
 // State for receving
-reg [1:0] receiving_state;
+reg [2:0] receiving_state;
+
+// Counts for what bytes we are on
+reg [2:0] prefix_byte_count;
+reg [4:0] data_byte_count;
 
 // State names
-localparam idle = 0, receiving_meta_packet_info = 1, receiving_packet_prefix = 2, receiving_packet_data = 3;
+localparam idle = 0, receiving_meta_packet_info = 1, receiving_packet_prefix = 2, receiving_packet_data = 3
+            send_metadata_to_fib = 4, send_prefix_to_fib = 5, send_data_to_fib = 6;
 
 /* 
     Just assign the chip select low for now, since we are only interfacing with one interface.
@@ -86,6 +94,8 @@ always@(posedge clk, posedge rst) begin
         packet_meta_data <= 8'd0;
         packet_prefix <= 64'd0;
         packet_data <= 255'd0;
+        prefix_byte_count <= 0;
+        data_byte_count <= 0;
     end
     else begin
         case (receiving_state)
@@ -97,9 +107,11 @@ always@(posedge clk, posedge rst) begin
                 meta_data_count <= 7;
                 prefix_count <= 63;
                 data_count <= 255;
+                prefix_byte_count <= 7;
+                data_byte_count <= 32;
 
                 // Wait for miso to go low (start bit)
-                if (~miso) begin
+                if (!miso) begin
                     receiving_state <= receiving_meta_packet_info;
                 end
             end 
@@ -133,7 +145,7 @@ always@(posedge clk, posedge rst) begin
                     // If this was an interest packet, done receving, set bit high so FIB can grab data and go back to idle
                     if (isInterestPacket) begin
                         RX_valid <= HIGH;
-                        receiving_state <= idle;
+                        receiving_state <= send_data_to_fib;
                     end
                     // Otherwise we must receive the data content of the packet as well
                     else begin
@@ -146,14 +158,45 @@ always@(posedge clk, posedge rst) begin
                 prefix_count <= prefix_count - 1;
             end
             receiving_packet_data: begin
-
-                // Time to move states and let FIB know that the data packet is ready!
+                // Time to move states and let FIB know that the data packet is and forward data!
                 if (data_count == 0) begin
                     RX_valid <= HIGH;
-                    receiving_state <= idle;
+                    receiving_state <= send_data_to_fib;
                 end
                 packet_data[data_count] <= miso;
                 data_count <= data_count - 1;
+            end
+            send_metadata_to_fib: begin
+                output_shift_register <= packet_meta_data;
+                receiving_state <= send_prefix_to_fib;
+            end
+            send_prefix_to_fib: begin
+                if (prefix_byte_count == 0) begin
+                    // Done sending prefix data!
+                    if (isInterestPacket) begin
+                        // Don't need to send data to FIB
+                        receiving_state <= idle;
+                    end
+                    // Otherwise we need to send data
+                    else begin
+                        receiving_state <= send_data_to_fib;
+                    end
+                end
+                // Grab the 8 MSB and shift them out to grab next 8 MSBs
+                output_shift_register <= (packet_prefix[63:56]) << 8;
+                prefix_byte_count <= prefix_byte_count - 1;
+            end
+            send_data_to_fib: begin
+                if (data_byte_count == 0) begin
+                    // Done sendind data! Back to idle
+                    receiving_state <= idle;
+                end
+                // Grab the 8 MSB and shift them out to grab next 8 MSBs
+                output_shift_register <= (packet_data[255:248]) << 8;
+                data_byte_count <= data_byte_count - 1;
+            end
+            default: begin
+                receiving_state <= idle;
             end
         endcase
     end

@@ -14,8 +14,6 @@ module fib_table(
     input rejected,
 
     // DATA INPUTS
-    input [5:0] data_in_len,
-    input [63:0] data_in_prefix,
     input data_ready,
     input [7:0] data_in,
 
@@ -57,31 +55,15 @@ hash HASH_INCOMING(hash_prefix_in, hash_value_in, clk, rst);
 /* 
     Saving logic. Used for saving the incoming prefix data to the fib hash table.
 */
-parameter wait_state = 2'd0, get_hash = 2'd1,  save_to_fib_table = 2'd2;
-reg [1:0] saving_logic_state;
-reg [1:0] saving_logic_next_state;
-reg [63:0] prefix_saving;
-reg [5:0] len_saving;
-
-always@(data_ready, saving_logic_state) begin
-    case (saving_logic_state)
-        wait_state: begin
-            if (data_ready)
-                saving_logic_next_state <= get_hash;
-            else
-                saving_logic_next_state <= wait_state;
-        end 
-        get_hash: begin
-            hash_prefix_in <= prefix_saving;
-            saving_logic_next_state <= save_to_fib_table;
-        end
-        save_to_fib_table: begin
-            saving_logic_next_state <= wait_state;
-        end
-        default:
-            saving_logic_next_state <= wait_state;
-    endcase
-end
+parameter wait_state = 0, receive_metadata = 1, receive_prefix = 2, receive_data = 3;
+reg [1:0] incoming_data_logic_state;
+reg [1:0] incoming_data_logic_next_state;
+reg [63:0] prefix_from_SPI;
+reg [7:0] metadata_from_SPI;
+reg [255:0] data_from_SPI;
+reg [2:0] prefix_byte_count;
+reg [4:0] data_byte_count;
+reg isDataPacket;
 
 integer i;
 always@(posedge clk, posedge rst) begin
@@ -90,109 +72,51 @@ always@(posedge clk, posedge rst) begin
         for (i=0; i<64; i=i+1) 
             hashTable[i] <= 10'b0000000000;
         saving_logic_state <= wait_state;
+        prefix_from_SPI <= 0;
+        metadata_from_SPI <= 0;
+        data_from_SPI <= 0;
+        prefix_byte_count <= 0;
+        data_byte_count <= 0;
+        isDataPacket <= 0;
     end
-    // Latch the prefix and len during wait state, so we can save for other states
-    else if (saving_logic_state == wait_state) begin
-        prefix_saving <= data_in_prefix;
-        len_saving <= data_in_len;
-        saving_logic_state <= saving_logic_next_state;
-    end
-
-    // Latch hash value after sending to values to hash table
-    else if (saving_logic_state == get_hash) begin
-        saving_logic_state <= saving_logic_next_state;
-        saved_hash_in <= hash_value_in;
-    end
-    else if (saving_logic_state == save_to_fib_table) begin
-        // Set the valid bit high
-        hashTable[len_saving][saved_hash_in] <= 1'b1;
-        saving_logic_state <= saving_logic_next_state;
-    end
-    else
-        saving_logic_state <= saving_logic_next_state;
-
-end
-
-/* 
-    Propogating data. Used for passing prefix to the PIT to ensure that the data was requested. It it was requested,
-    pass the shift register data to the PIT table. Otherwise just drop it.
-*/
-
-// Assign the clk to the data output, for when transferring data so that they are synced
-//assign clk_out = clk;
-
-parameter send_prefix_to_pit = 1, wait_for_pit = 2, transfer_data = 3; 
-parameter size_of_data = 1023;  // Size of data in bytes (1,024 bytes)
-reg [1:0] propagating_data_state;
-reg [1:0] propagating_data_next_state;
-reg [63:0] prefix_propagating;
-reg [5:0] len_propagating;
-reg [9:0] bytes_sent;
-reg [9:0] bytes_sent_next;
-
-always@(data_ready, propagating_data_state, rejected, start_send_to_pit, bytes_sent) begin
-    // Ensure no latches
-    pit_out_prefix <= 0;
-    //pit_out_len <= 0;
-    prefix_ready <= 0;
-    bytes_sent_next <= 0;
-    out_data <= 0;
-    ready_for_data <= 0;
-
-    case (propagating_data_state)
-        wait_state: begin
-            if (data_ready)
-                propagating_data_next_state <= send_prefix_to_pit;
-            else
-                propagating_data_next_state <= wait_state;
-        end 
-        send_prefix_to_pit: begin
-            // Send the prefix data to the PIT to see if this data was requested.
-            pit_out_prefix <= prefix_propagating;
-            //pit_out_len <= len_propagating;
-            prefix_ready <= 1'b1;
-            propagating_data_next_state <= wait_for_pit;
-        end
-        wait_for_pit: begin
-            // Wait for either a rejection or send bit to know when to send the bit
-            if (rejected) begin     
-                // Rejection means don't transfer the data, so just go back to wait state
-                propagating_data_next_state <= wait_state;
-            end
-            else if (start_send_to_pit) begin 
-                propagating_data_next_state <= transfer_data;
-                ready_for_data <= 1'b1;
-            end
-            else begin
-                propagating_data_next_state <= wait_for_pit;
-            end
-        end
-        transfer_data: begin
-            if (bytes_sent == size_of_data) begin
-                propagating_data_next_state <= wait_state;
-                bytes_sent_next <= 0;
-            end
-            else 
-                propagating_data_next_state <= transfer_data;
-                out_data <= data_in;
-                bytes_sent_next <= bytes_sent + 1'b1;
-        end
-    endcase
-end
-
-always@(posedge clk, posedge rst) begin
-    if (rst)
-        propagating_data_state <= wait_state;
-    // Latch the prefix and len during wait state, so we can save for other states
     else begin
-        if (propagating_data_state == wait_state) begin
-            prefix_propagating <= data_in_prefix;
-            len_propagating <= data_in_len;
-        end
-        propagating_data_state <= propagating_data_next_state;
-        // Latch the bytes sent on each clk cycle
-        bytes_sent <= bytes_sent_next;
+        case (incoming_data_logic_state)
+            wait_state: begin
+                // Set counts to MSB of each registers
+                prefix_input_count <= 8;
+                data_input_count <= 32;
+                transferring_data_packet <= LOW; // Default to low
+
+                if (data_ready) begin
+                    transmitting_state <= receive_metadata;
+                end
+            end
+			receive_metadata: begin
+				metadata_from_SPI <= data_in;
+				transmitting_state <= receive_prefix;
+			end
+			receive_prefix: begin
+				if(prefix_input_count > 0) begin
+					packet_prefix_input_save <= (packet_prefix_input_save << 8) + data_in;
+					prefix_input_count <= prefix_input_count - 1;
+				end
+				else begin
+					transmitting_state <= packet_data;
+				end
+			end
+			receive_data: begin
+				if(prefix_data_count > 0) begin
+					packet_data_input_save <= (packet_data_input_save << 8) + data_in;	
+					prefix_data_count = prefix_data_count - 1;			
+				end
+				else begin
+					transmitting_state <= send_meta_data;
+				end
+			end 
+            default: 
+        endcase
     end
+
 end
 
 // OUTGOING PACKET LOGIC
@@ -210,7 +134,8 @@ reg [5:0] len;
 reg [5:0] next_len;
 reg hashtable_value;
 
-always@(fib_out_bit, rst, outgoing_state) begin
+// Used for sending out interest packets and data packets
+always@(fib_out_bit, start_send_to_pit, outgoing_state) begin
     // Ensure no latches
     longest_matching_prefix <= 0;
     longest_matching_prefix_len <= 0;
