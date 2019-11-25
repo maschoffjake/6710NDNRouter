@@ -39,8 +39,8 @@ module spi_interface(
     input rst,
 
     // Receiving output
-    output reg          RX_valid,               // Valid pulse for 1 cycle for RX byte to know data is ready
-    output reg          output_shift_register,  // Used to send data to the FIB 
+    output reg              RX_valid,               // Valid pulse for 1 cycle for RX byte to know data is ready
+    output reg [7:0]        output_shift_register,  // Used to send data to the FIB 
 
     // Transferring input
     input               TX_valid,                   // Valid pulse for 1 cycle for TX byte

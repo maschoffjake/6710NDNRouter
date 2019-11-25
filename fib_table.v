@@ -64,6 +64,8 @@ reg [2:0] prefix_byte_count;
 reg [4:0] data_byte_count;
 reg isDataPacket;
 
+always(@)
+
 integer i;
 always@(posedge clk, posedge rst) begin
     if (rst) begin
