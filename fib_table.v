@@ -14,8 +14,8 @@ module fib_table(
     input rejected,
 
     // DATA INPUTS
-    input data_ready,
-    input [7:0] data_in,
+    input RX_valid,
+    input [7:0] data_SPI_to_FIB,
 
     // OVERALL INPUTS 
     input clk,
@@ -55,8 +55,8 @@ hash HASH_INCOMING(hash_prefix_in, hash_value_in, clk, rst);
     Saving logic. Used for saving the incoming prefix data to the fib hash table.
 */
 parameter wait_state = 0, receive_metadata = 1, receive_prefix = 2, receive_data = 3;
-reg [1:0] incoming_data_logic_state;
-reg [1:0] incoming_data_logic_next_state;
+reg [1:0] incoming_data_state;
+reg [1:0] incoming_data_next_state;
 reg [63:0] prefix_from_SPI;
 reg [7:0] metadata_from_SPI;
 reg [255:0] data_from_SPI;
@@ -64,7 +64,9 @@ reg [2:0] prefix_byte_count;
 reg [4:0] data_byte_count;
 reg isDataPacket;
 
-always(@)
+always@(RX_valid, incoming_data) begin
+    
+end
 
 integer i;
 always@(posedge clk, posedge rst) begin
