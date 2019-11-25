@@ -85,7 +85,7 @@ always@(posedge clk, posedge rst) begin
         receiving_state <= idle;
         packet_meta_data <= 8'd0;
         packet_prefix <= 64'd0;
-        packet_data <= 256'd0;
+        packet_data <= 255'd0;
     end
     else begin
         case (receiving_state)
