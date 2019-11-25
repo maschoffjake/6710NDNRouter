@@ -244,8 +244,10 @@ reg [2:0] longest_matching_prefix_count;
 reg [2:0] total_prefix_count;
 
 // Reg used to tell when to also send data to the SPI module as well (for data packets)
-reg send_data;
 reg [255:0] data_to_send;
+
+// Flag used for telling whether or not outgoing packet is a data packet or not
+reg data_packet;
 
 // Counter used to read in what byte we have read in from the PIT
 reg [4:0] pit_input_byte_counter;
@@ -317,7 +319,7 @@ always@(fib_out_bit, outgoing_state) begin
         send_longest_prefix_to_spi: begin
             if (longest_matching_prefix_count == 0) begin
                 // Done sending longest matching prefix, back to idle
-                outgoing_next_state <= idle;
+                outgoing_next_state <= wait_state;
             end
             else begin
                 outgoing_next_state <= send_longest_prefix_to_spi;
@@ -358,13 +360,13 @@ always @(posedge clk, posedge rst) begin
         hashtable_value <= 0;
         saved_hash_out <= 0;
         total_prefix <= 0;
-        total_prefix_count < 0;
+        total_prefix_count <= 0;
         longest_matching_prefix_count <= 0;
         data_packet <= 0;
         data_to_send <= 0;
         pit_input_byte_counter <= 0;
         fib_to_spi_data_count <= 0;
-    end;
+    end
     else begin
         case (outgoing_state)
             wait_state: begin
@@ -382,7 +384,7 @@ always @(posedge clk, posedge rst) begin
                 longest_matching_prefix_count <= 7;
 
                 // Default to no data packet coming in
-                data_packet <= 0;
+                data_packet <= LOW;
 
                 // Initialize pit count to MSB for reading in data from PIT incase there is a data packet
                 pit_input_byte_counter <= 31;
@@ -432,8 +434,8 @@ always @(posedge clk, posedge rst) begin
             end
             send_data_to_spi: begin
                 // Shifting 8 bits at a time
-                data_FIB_to_SPI <= data_packet[255:248];    // Shifting 8 MSB
-                data_packet <= data_packet << 8;
+                data_FIB_to_SPI <= data_to_send[255:248];    // Shifting 8 MSB
+                data_to_send <= data_to_send << 8;
                 outgoing_state <= outgoing_next_state;
                 fib_to_spi_data_count <= fib_to_spi_data_count - 1;
             end
