@@ -24,7 +24,7 @@
                 2nd - 9th byte:
                     All 64-bits represent the prefix content header (MSB sent first) of the requested data
 */
-module (
+module spi_interface(
 
     // SPI interfaces
     output sclk,
