@@ -28,7 +28,7 @@ module spi_interface(
 
     // SPI interfaces
     output sclk,
-    output mosi,
+    output reg mosi,
     input miso,
     output cs,
 
