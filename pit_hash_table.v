@@ -1,4 +1,4 @@
-module pit_hash_table(prefix, pit_out_prefix, length, prefix_ready, out_bit, clk, rst, table_entry, meta_data, pit_in_bit, rejected, data_packet);
+module pit_hash_table(prefix, pit_out_prefix, pit_out_metadata, length, prefix_ready, out_bit, clk, rst, table_entry, meta_data, pit_in_bit, rejected, data_packet);
 input [63:0] prefix;
 input [63:0] pit_out_prefix;
 input [7:0] pit_out_metadata;
