@@ -35,6 +35,8 @@ wire [9:0] current_byte;    // PIT --> RAM
 wire [7:0] read_data;       // RAM --> PIT
 wire [7:0] out_data;        // PIT --> RAM/USER
 wire [7:0] data_fib_to_pit;
+wire [7:0] pit_out_metadata;// FIB --> PITHASH
+wire [7:0] metadata;		// PITHASH --> FIB
 wire write_enable;          // PIT --> RAM
 wire start_send_to_pit;     // PIT --> FIB
 wire fib_out_bit;           // PIT --> FIB
@@ -47,11 +49,13 @@ pit_hash_table pit_hash_table_module (
     .prefix         (prefix),         // input [63:0]
     .prefix_ready   (prefix_ready),   // input
     .pit_out_prefix (pit_out_prefix), // input [63:0]
-    //.pit_out_len    (pit_out_len),    // input [5:0]
+    .length    		(len),    		  // input [5:0]
+	.pit_out_metadata(pit_out_metadata)// input [7:0]
     .out_bit        (out_bit),        // input
     .clk            (clk),            // input
     .rst            (rst),            // input
     .table_entry    (table_entry),    // output [11:0]
+	.metadata       (metadata)        // output [7:0]
     .pit_in_bit     (pit_in_bit),     // output
     .rejected       (rejected)        // output
 );
@@ -98,7 +102,7 @@ single_port_ram ram (
 	.addr   (address),      // input [9:0] 
 	.byte   (current_byte), // input [9:0]
 	.we     (write_enable), // input 
-    	.clk    (clk),          // input 
+    .clk    (clk),          // input 
 	.rst    (rst),		// input
 	.q      (read_data)     // output [7:0] 
 );
