@@ -29,7 +29,7 @@ module fib_table(
     output reg [7:0] pit_out_metadata,
 
     // PIT DATA OUTPUT
-    output reg [7:0] data_FIB_to_PIT;
+    output reg [7:0] data_FIB_to_PIT,
 
     // DATA OUTPUTS
     output reg FIB_to_SPI_data_flag,
