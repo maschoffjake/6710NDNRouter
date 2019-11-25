@@ -37,7 +37,7 @@ spi_interface spi_interface_module(
     .TX_valid(TX_valid),
     .packet_data_input(packet_data_input),
     .packet_prefix_input(packet_prefix_input),
-    .packet_data_input(packet_data_input)
+    .packet_meta_data_input(packet_meta_data_input)
 );
 
 /*
