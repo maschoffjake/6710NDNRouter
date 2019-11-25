@@ -73,7 +73,7 @@ localparam idle = 0, receiving_meta_packet_info = 1;, receiving_packet_prefix = 
     with multiple outgoing interfaces.
 */
 assign cs = LOW;
-
+assign sclk = clk;
 
 
 /*
