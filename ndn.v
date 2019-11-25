@@ -50,12 +50,12 @@ pit_hash_table pit_hash_table_module (
     .prefix_ready   (prefix_ready),   // input
     .pit_out_prefix (pit_out_prefix), // input [63:0]
     .length    		(len),    		  // input [5:0]
-	.pit_out_metadata(pit_out_metadata)// input [7:0]
+	.pit_out_metadata(pit_out_metadata),// input [7:0]
     .out_bit        (out_bit),        // input
     .clk            (clk),            // input
     .rst            (rst),            // input
     .table_entry    (table_entry),    // output [11:0]
-	.metadata       (metadata)        // output [7:0]
+	.metadata       (metadata),        // output [7:0]
     .pit_in_bit     (pit_in_bit),     // output
     .rejected       (rejected)        // output
 );
