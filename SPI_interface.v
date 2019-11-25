@@ -214,7 +214,7 @@ always@(posedge clk, posedge rst)
                 end
             end 
             send_meta_data: begin
-                if (meta_data_count == 0) begin
+                if (meta_data_input_count == 0) begin
                     transmitting_state <= send_prefix;
                 end 
                 else if (meta_data_count == 6) begin
