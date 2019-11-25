@@ -14,8 +14,8 @@ module fib_table(
     input rejected,
 
     // DATA INPUTS
-    input data_ready,
-    input [7:0] data_in,
+    input RX_valid,
+    input [7:0] data_SPI_to_FIB,
 
     // OVERALL INPUTS 
     input clk,
@@ -25,12 +25,17 @@ module fib_table(
     //output reg [5:0] pit_out_len,
     output reg [63:0] pit_out_prefix,
     output reg prefix_ready,
-    output reg [7:0] out_data,
+    output reg [7:0] pit_out_metadata,
+
+    // PIT DATA OUTPUT
+    output reg [7:0] data_FIB_to_PIT;
 
     // DATA OUTPUTS
     output reg FIB_to_SPI_data_flag,
     output reg [7:0] data_FIB_to_SPI
 );
+
+localparam HIGH = 1, LOW = 0;
 
 /*
     Create a 2D array where there are 64 entries (1 for each possible length of the prefix),
@@ -54,17 +59,90 @@ hash HASH_INCOMING(hash_prefix_in, hash_value_in, clk, rst);
 /* 
     Saving logic. Used for saving the incoming prefix data to the fib hash table.
 */
-parameter wait_state = 0, receive_metadata = 1, receive_prefix = 2, receive_data = 3;
-reg [1:0] incoming_data_logic_state;
-reg [1:0] incoming_data_logic_next_state;
+parameter wait_state = 0, receive_metadata = 1, receive_prefix = 2, receive_data = 3, wait_for_response = 4, pass_data_to_pit = 5;
+reg [2:0] incoming_data_state;
+reg [2:0] incoming_data_next_state;
 reg [63:0] prefix_from_SPI;
 reg [7:0] metadata_from_SPI;
 reg [255:0] data_from_SPI;
+
+// Flag used to keep track if we just received an interest or data packet
+reg isInterestPacket;
+
+// Count registers used for grabbing the correct bits
 reg [2:0] prefix_byte_count;
 reg [4:0] data_byte_count;
-reg isDataPacket;
 
-always(@)
+always@(RX_valid, incoming_data_state) begin
+    // Default values (no latches)
+    incoming_data_next_state <= 0;
+
+    case (incoming_data_state)
+        wait_state: begin
+            if (RX_valid) begin
+                // About to receive a packet, time to form packet
+                incoming_data_next_state <= receive_metadata;
+            end
+            else begin
+                incoming_data_next_state <= wait_state;
+            end
+        end 
+        receive_metadata: begin
+            incoming_data_next_state <= receive_prefix;
+        end
+        receive_prefix: begin
+            if(prefix_byte_count == 0) begin
+                if (isInterestPacket) begin
+                    // If it's interest, we are done parsing and back to waiting!
+                    incoming_data_next_state <= wait_state;
+                end	
+                else begin
+                    // If it is a data packet we still need to receive that data
+                    incoming_data_next_state <= receive_data;
+                end
+            end
+            else begin
+                // Continue receiving the prefix
+                incoming_data_next_state <= receive_prefix;  
+            end
+        end
+        receive_data: begin
+            if(data_byte_count == 0) begin
+                // Done reading from data, now we must wait for a rejection or accept flag from PIT
+                incoming_data_next_state <= wait_for_response;
+            end
+            else begin
+                // Continue receiving the data
+                incoming_data_next_state <= receive_data;
+            end
+        end
+        wait_for_response: begin
+            // If the data packet wasn't requested (it was rejected) we can just go back to wait state
+            if (rejected) begin
+                incoming_data_next_state <= wait_state;
+            end
+            else if (start_send_to_pit) begin
+                // The data was requested, so we must send it to the PIT!
+                incoming_data_next_state <= pass_data_to_pit;
+            end
+            else begin
+                incoming_data_next_state <= wait_for_response;
+            end
+        end
+        pass_data_to_pit: begin
+            if (data_byte_count == 0) begin
+                // Done passing data to the PIT, back to waiting
+                incoming_data_next_state <= wait_state;
+            end
+            else begin
+                incoming_data_next_state <= pass_data_to_pit;
+            end
+        end
+        default: begin
+            incoming_data_next_state <= wait_state;
+        end
+    endcase
+end
 
 integer i;
 always@(posedge clk, posedge rst) begin
@@ -72,49 +150,63 @@ always@(posedge clk, posedge rst) begin
         // Reset hash table values to all 0
         for (i=0; i<64; i=i+1) 
             hashTable[i] <= 10'b0000000000;
-        saving_logic_state <= wait_state;
+        incoming_data_state <= wait_state;
         prefix_from_SPI <= 0;
         metadata_from_SPI <= 0;
         data_from_SPI <= 0;
         prefix_byte_count <= 0;
         data_byte_count <= 0;
-        isDataPacket <= 0;
+        isInterestPacket <= 0;
     end
     else begin
-        case (incoming_data_logic_state)
+        case (incoming_data_state)
             wait_state: begin
                 // Set counts to MSB of each registers
-                prefix_input_count <= 8;
-                data_input_count <= 32;
-                transferring_data_packet <= LOW; // Default to low
+                prefix_byte_count <= 7;
+                data_byte_count <= 31;
+                isInterestPacket <= LOW; // Default to low
 
-                if (data_ready) begin
-                    transmitting_state <= receive_metadata;
-                end
+                // Continue moving states
+                incoming_data_state <= incoming_data_next_state;
             end
 			receive_metadata: begin
 				metadata_from_SPI <= data_in;
-				transmitting_state <= receive_prefix;
+				incoming_data_state <= incoming_data_next_state;
 			end
 			receive_prefix: begin
-				if(prefix_input_count > 0) begin
-					packet_prefix_input_save <= (packet_prefix_input_save << 8) + data_in;
-					prefix_input_count <= prefix_input_count - 1;
-				end
-				else begin
-					transmitting_state <= packet_data;
-				end
+                if(prefix_byte_count == 0) begin
+                    if (isInterestPacket) begin
+                        // If this is an interest packet, we don't need to grab data from the line, so set the output lines and alert the PIT hash-table that there's a new input
+                        prefix_ready <= HIGH;
+                        pit_out_metadata <= metadata_from_SPI;
+                        pit_out_prefix <= prefix_from_SPI;
+                    end	
+                else begin
+
+                // Save the data for further use (shift in the 8-bits at a time as well)
+                prefix_from_SPI <= (prefix_from_SPI << 8) + data_SPI_to_FIB;
+                prefix_byte_count <= prefix_byte_count - 1;
+                incoming_data_state <= incoming_data_next_state;
 			end
 			receive_data: begin
-				if(prefix_data_count > 0) begin
-					packet_data_input_save <= (packet_data_input_save << 8) + data_in;	
-					prefix_data_count = prefix_data_count - 1;			
-				end
-				else begin
-					transmitting_state <= send_meta_data;
-				end
+                data_from_SPI <= (data_from_SPI << 8) + data_SPI_to_FIB;
+                data_byte_count <= data_byte_count - 1;
+                incoming_data_state <= incoming_data_next_state;
 			end 
-            default: 
+            wait_for_response: begin
+                incoming_data_state <= incoming_data_next_state;
+                // Reset byte count, since we must now SEND 32 bytes
+                data_byte_count <= 31;
+            end
+            pass_data_to_pit: begin
+                // Shifting out upper 8-bits to the PIT
+                data_FIB_to_PIT <= data_from_SPI[255:248];
+                data_from_SPI <= data_from_SPI << 8;
+                data_byte_count <= data_byte_count - 1;
+            end
+            default: begin
+                incoming_data_state <= incoming_data_next_state;
+            end
         endcase
     end
 
@@ -128,7 +220,7 @@ wire [9:0] hash_value_out;
 hash HASH_OUTGOING(hash_prefix_out, hash_value_out, clk, rst);
 
 // Transmit longest matching prefix, total prefix, and meta data once longest prefix is found
-parameter get_hash = 1, check_for_valid_prefix = 2, send_meta_data_to_spi = 3, send_total_prefix_to_spi = 4, send_longest_prefix_to_spi = 5;
+parameter get_hash = 1, check_for_valid_prefix = 2, send_meta_data_to_spi = 3, send_total_prefix_to_spi = 4, send_longest_prefix_to_spi = 5, receive_data_from_PIT = 6;
 reg [2:0] outgoing_state;
 reg [2:0] outgoing_next_state;
 
@@ -157,7 +249,11 @@ always@(fib_out_bit, outgoing_state) begin
         wait_state: begin
             // If fib out is high but not start to send, we know we that we have data from the user
             if (fib_out_bit && !start_send_to_pit) begin
-                outgoing_next_state <=  check_for_valid_prefix;
+                outgoing_next_state <= check_for_valid_prefix;
+            end
+            else if(fib_out_bit && start_send_to_pit) begin
+                // Data packet incoming! Read data incoming from the PIT
+                outgoing_next_state <= receive_data_from_PIT;
             end
             else begin
                 outgoing_next_state <= wait_state;
