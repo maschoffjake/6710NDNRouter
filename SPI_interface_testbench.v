@@ -19,7 +19,7 @@ reg               TX_valid;                   // Valid pulse for 1 cycle for TX 
 wire [7:0]        input_shift_register;
 
 reg [1:0] state;
-parameter tx = 0, waiting = 1, sending = 2;    
+parameter tx = 0, waiting = 1, next = 2, sending = 3;    
 
 // Instantiate the module
 spi_interface spi_interface_module(
@@ -52,15 +52,21 @@ initial begin
     TX_valid = 0;
     start_incoming_packet = 0;
     start_outgoing_packet = 0;
-	clk = 0;
-    rst = 0;
-	state = 0;
-
-    // Start outgoing packet
-    packet_meta_data_test = 8'b00101000;
+	packet_meta_data_test = 8'b00101000;
     packet_prefix_test = 64'd129;
     packet_data_test = "here is data";
 	transmitting_data_test = {packet_meta_data_test, packet_prefix_test, packet_data_test};
+	clk = 0;
+    rst = 0;
+	state = 0;
+    #2;
+    rst = 1;
+    #2;
+    rst = 0;
+    #2;
+
+    // Start outgoing packet
+
 end
 
 

@@ -235,6 +235,7 @@ always@(posedge clk, posedge rst)
         case (transmitting_state)
             idle: begin
                 // Set counts to MSB of each registers
+				meta_data_input_count <= 1;
                 prefix_input_count <= 8;
                 data_input_count <= 32;
                 transferring_data_packet <= LOW; // Default to low
@@ -250,8 +251,13 @@ always@(posedge clk, posedge rst)
                 end
             end
 			packet_meta: begin
+				if(meta_data_input_count > 0) begin
 				packet_meta_data_input_save <= input_shift_register;
+				meta_data_input_count = meta_data_input_count - 1;
+				end
+				else begin
 				transmitting_state <= packet_prefix_state;
+				end
 			end
 			packet_prefix_state: begin
 				if(prefix_input_count > 0) begin
