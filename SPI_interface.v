@@ -72,8 +72,7 @@ reg [2:0] prefix_byte_count;
 reg [4:0] data_byte_count;
 
 // State names
-localparam idle = 0, receiving_meta_packet_info = 1, receiving_packet_prefix = 2, receiving_packet_data = 3
-            send_metadata_to_fib = 4, send_prefix_to_fib = 5, send_data_to_fib = 6;
+localparam idle = 0, receiving_meta_packet_info = 1, receiving_packet_prefix = 2, receiving_packet_data = 3, send_metadata_to_fib = 4, send_prefix_to_fib = 5, send_data_to_fib = 6;
 
 /* 
     Just assign the chip select low for now, since we are only interfacing with one interface.
@@ -213,7 +212,7 @@ reg [7:0]    packet_meta_data_input_save;
 reg [63:0]   packet_prefix_input_save;
 reg [255:0]  packet_data_input_save;
 
-parameter packet_meta = 1, packet_prefix = 2, packet_data = 3, send_meta_data = 4, send_prefix = 5, send_data = 6;
+parameter packet_meta = 1, packet_prefix_state = 2, packet_data_state = 3, send_meta_data = 4, send_prefix = 5, send_data = 6;
 reg [2:0] transmitting_state;
 
 /*
@@ -252,21 +251,21 @@ always@(posedge clk, posedge rst)
             end
 			packet_meta: begin
 				packet_meta_data_input_save <= input_shift_register;
-				transmitting_state <= packet_prefix;
+				transmitting_state <= packet_prefix_state;
 			end
-			packet_prefix: begin
+			packet_prefix_state: begin
 				if(prefix_input_count > 0) begin
 					packet_prefix_input_save <= (packet_prefix_input_save << 8) + input_shift_register;
 					prefix_input_count <= prefix_input_count - 1;
 				end
 				else begin
-					transmitting_state <= packet_data;
+					transmitting_state <= packet_data_state;
 				end
 			end
-			packet_data: begin
-				if(prefix_data_count > 0) begin
+			packet_data_state: begin
+				if(data_input_count > 0) begin
 					packet_data_input_save <= (packet_data_input_save << 8) + input_shift_register;	
-					prefix_data_count = prefix_data_count - 1;			
+					data_input_count = data_input_count - 1;			
 				end
 				else begin
 					transmitting_state <= send_meta_data;
