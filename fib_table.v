@@ -261,12 +261,14 @@ always @(posedge clk, posedge rst) begin
                 outgoing_state <= outgoing_next_state;
             end
             send_total_prefix_to_spi: begin
-                data_FIB_to_SPI <= metadata;
+                data_FIB_to_SPI <= total_prefix[63:56];
+                total_prefix <= total_prefix << 8;
                 outgoing_state <= outgoing_next_state;
                 total_prefix_count <= total_prefix_count - 1;
             end
             send_longest_prefix_to_spi: begin
-                data_FIB_to_SPI <= metadata;
+                data_FIB_to_SPI <= prefix;
+                prefix <= prefix << 8;
                 outgoing_state <= outgoing_next_state;
                 longest_matching_prefix_count <= longest_matching_prefix_count - 1;
             end
