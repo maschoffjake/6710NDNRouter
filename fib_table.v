@@ -171,7 +171,7 @@ always@(posedge clk, posedge rst) begin
                 incoming_data_state <= incoming_data_next_state;
             end
 			receive_metadata: begin
-				metadata_from_SPI <= data_in;
+				metadata_from_SPI <= data_SPI_to_FIB;
 				incoming_data_state <= incoming_data_next_state;
 			end
 			receive_prefix: begin
@@ -182,7 +182,6 @@ always@(posedge clk, posedge rst) begin
                         pit_out_metadata <= metadata_from_SPI;
                         pit_out_prefix <= prefix_from_SPI;
                     end	
-                else begin
 
                 // Save the data for further use (shift in the 8-bits at a time as well)
                 prefix_from_SPI <= (prefix_from_SPI << 8) + data_SPI_to_FIB;
@@ -190,6 +189,12 @@ always@(posedge clk, posedge rst) begin
                 incoming_data_state <= incoming_data_next_state;
 			end
 			receive_data: begin
+                if (data_byte_count == 0) begin
+                    // Now that all of the data packet has been received, let the PIT know so it can see if this data packet was requested
+                    prefix_ready <= HIGH;
+                    pit_out_metadata <= metadata_from_SPI;
+                    pit_out_prefix <= prefix_from_SPI;
+                end
                 data_from_SPI <= (data_from_SPI << 8) + data_SPI_to_FIB;
                 data_byte_count <= data_byte_count - 1;
                 incoming_data_state <= incoming_data_next_state;
