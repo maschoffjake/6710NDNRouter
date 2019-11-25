@@ -220,7 +220,7 @@ wire [9:0] hash_value_out;
 hash HASH_OUTGOING(hash_prefix_out, hash_value_out, clk, rst);
 
 // Transmit longest matching prefix, total prefix, and meta data once longest prefix is found
-parameter get_hash = 1, check_for_valid_prefix = 2, send_meta_data_to_spi = 3, send_total_prefix_to_spi = 4, send_longest_prefix_to_spi = 5;
+parameter get_hash = 1, check_for_valid_prefix = 2, send_meta_data_to_spi = 3, send_total_prefix_to_spi = 4, send_longest_prefix_to_spi = 5, receive_data_from_PIT = 6;
 reg [2:0] outgoing_state;
 reg [2:0] outgoing_next_state;
 
@@ -249,7 +249,11 @@ always@(fib_out_bit, outgoing_state) begin
         wait_state: begin
             // If fib out is high but not start to send, we know we that we have data from the user
             if (fib_out_bit && !start_send_to_pit) begin
-                outgoing_next_state <=  check_for_valid_prefix;
+                outgoing_next_state <= check_for_valid_prefix;
+            end
+            else if(fib_out_bit && start_send_to_pit) begin
+                // Data packet incoming! Read data incoming from the PIT
+                outgoing_next_state <= receive_data_from_PIT;
             end
             else begin
                 outgoing_next_state <= wait_state;
