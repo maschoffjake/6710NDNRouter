@@ -182,7 +182,7 @@ always@(posedge clk, posedge rst) begin
                         pit_out_metadata <= metadata_from_SPI;
                         pit_out_prefix <= prefix_from_SPI;
                     end	
-
+                end
                 // Save the data for further use (shift in the 8-bits at a time as well)
                 prefix_from_SPI <= (prefix_from_SPI << 8) + data_SPI_to_FIB;
                 prefix_byte_count <= prefix_byte_count - 1;
