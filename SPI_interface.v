@@ -253,10 +253,11 @@ always@(posedge clk, posedge rst)
 			packet_meta: begin
 				if(meta_data_input_count > 0) begin
 				packet_meta_data_input_save <= input_shift_register;
-				meta_data_input_count = meta_data_input_count - 1;
+				meta_data_input_count <= meta_data_input_count - 1;
 				end
-				else begin
+				if(meta_data_input_count == 1) begin
 				transmitting_state <= packet_prefix_state;
+				meta_data_input_count <= 7;
 				end
 			end
 			packet_prefix_state: begin
@@ -264,17 +265,19 @@ always@(posedge clk, posedge rst)
 					packet_prefix_input_save <= (packet_prefix_input_save << 8) + input_shift_register;
 					prefix_input_count <= prefix_input_count - 1;
 				end
-				else begin
+				if(prefix_input_count == 1) begin
 					transmitting_state <= packet_data_state;
+                	prefix_input_count <= 63;
 				end
 			end
 			packet_data_state: begin
 				if(data_input_count > 0) begin
 					packet_data_input_save <= (packet_data_input_save << 8) + input_shift_register;	
-					data_input_count = data_input_count - 1;			
+					data_input_count <= data_input_count - 1;			
 				end
-				else begin
+				if(data_input_count == 1) begin
 					transmitting_state <= send_meta_data;
+                 	data_input_count <= 255;
 				end
 			end 
             send_meta_data: begin

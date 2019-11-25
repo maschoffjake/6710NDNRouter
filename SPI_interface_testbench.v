@@ -16,7 +16,7 @@ wire		  output_shift_register;
 
 // Transferring input
 reg               TX_valid;                   // Valid pulse for 1 cycle for TX byte
-wire [7:0]        input_shift_register;
+reg [7:0] input_shift_register;
 
 reg [1:0] state;
 parameter tx = 0, waiting = 1, next = 2, sending = 3;    
@@ -42,11 +42,11 @@ reg start_incoming_packet;
 reg start_outgoing_packet;
 
 reg [7:0]         packet_meta_data_test;     
-reg [71:0]        packet_prefix_test;
+reg [63:0]        packet_prefix_test;
 reg [255:0]       packet_data_test;
 reg [327:0]		  transmitting_data_test;
 
-assign input_shift_register = transmitting_data_test[327:320];
+// assign input_shift_register = transmitting_data_test[325:318];
 
 initial begin
     TX_valid = 0;
@@ -84,11 +84,12 @@ begin
 		waiting:
 		begin
 			TX_valid <= 0;
-			state <= sending;
+			state <= next;
 		end
-		sending:
+		next:
 		begin
-			transmitting_data_test <= transmitting_data_test << 8;
+			input_shift_register = transmitting_data_test[327:320];
+			transmitting_data_test = transmitting_data_test << 8;
 		end
 		endcase
 
