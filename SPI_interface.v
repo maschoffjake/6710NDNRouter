@@ -218,7 +218,7 @@ always@(posedge clk, posedge rst)
                     transmitting_state <= send_prefix;
                 end 
                 else if (meta_data_input_count == 6) begin
-                    transferring_data_packet <= ~packet_meta_data_input_save[meta_data_input_count]; // See if the packet being transferred is a data packet, so we know what we are transferring
+                    transferring_data_packet <= !packet_meta_data_input_save[meta_data_input_count]; // See if the packet being transferred is a data packet, so we know what we are transferring
                 end
                 mosi <= packet_meta_data_input_save[meta_data_input_count];
                 meta_data_input_count <= meta_data_input_count - 1;
