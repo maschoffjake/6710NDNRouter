@@ -50,12 +50,12 @@ always @(state, out_bit, prefix_ready) begin
 				data_packet = 0;
 				// Set values based on who raised flag
 				if(out_bit) begin
-					meta_data = {2'b00, length};
+					meta_data = {2'b01, length};
 					pre_hash = prefix;
 					next_state = get_hash;
 				end
 				if(prefix_ready) begin
-					meta_data = pit_out_prefix;
+					meta_data = pit_out_metadata;
 					pre_hash = pit_out_prefix;
 					next_state = get_hash;
 				end
