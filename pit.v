@@ -11,7 +11,6 @@ output reg [7:0] out_data;
 output reg start_bit, write_enable, fib_out;
 
 reg [2:0] state;
-reg [11:0] pit_table_entry;
 reg [9:0] pit_address;
 reg [9:0] memory_count;
 
@@ -67,8 +66,10 @@ begin
 			state <= MEMORY_OUT; // otherwise just the start bit is high and the FIB will know it doesn't have the data
 			fib_out <= 1;
 		end 
-		write_enable <= 1;
-		state <= MEMORY_IN;
+		else begin
+			write_enable <= 1;
+			state <= MEMORY_IN;
+		end
 	end
 
 	MEMORY_IN:
