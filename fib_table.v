@@ -230,7 +230,7 @@ always@(posedge clk, posedge rst) begin
             end
             save_data_to_fib: begin
                 // Set the valid bit high for this prefix that was received
-                hashTable[metadata_from_SPI[5:0]][saved_hash_in] = HIGH;
+                hashTable[metadata_from_SPI[5:0]][saved_hash_in] <= HIGH;
                 incoming_data_state <= incoming_data_next_state;
             end
             default: begin
