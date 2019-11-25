@@ -96,7 +96,7 @@ always@(posedge clk, posedge rst) begin
                 packet_data <= 0;
                 meta_data_count <= 7;
                 prefix_count <= 63;
-                data_count <= 256;
+                data_count <= 255;
 
                 // Wait for miso to go low (start bit)
                 if (~miso) begin
@@ -195,7 +195,7 @@ always@(posedge clk, posedge rst)
                 // Set counts to MSB of each registers
                 meta_data_input_count <= 7;
                 prefix_input_count <= 63;
-                data_input_count <= 256;
+                data_input_count <= 255;
                 transferring_data_packet <= LOW; // Default to low
 
                 if (TX_valid) begin
@@ -218,16 +218,31 @@ always@(posedge clk, posedge rst)
                     transmitting_state <= send_prefix;
                 end 
                 else if (meta_data_count == 6) begin
-                    transferring_data_packet <= HIGH; // See if the packet being transferred is a data packet, so we know what we are transferring
+                    transferring_data_packet <= ~packet_meta_data_input_save[meta_data_input_count]; // See if the packet being transferred is a data packet, so we know what we are transferring
                 end
                 mosi <= packet_meta_data_input_save[meta_data_input_count];
                 meta_data_input_count <= meta_data_input_count - 1;
             end
             send_prefix: begin
-                
+                if (prefix_input_count == 0) begin
+                    // Check to see if we are transferring data
+                    if (transferring_data_packet) begin
+                        receiving_state <= send_data;
+                    end
+                    // If not, go back to idle
+                    else begin
+                        receiving_state <= idle;
+                    end
+                end
+                mosi <= packet_prefix_input_save[prefix_input_count];
+                prefix_input_count <= prefix_input_count - 1;
             end
             send_data: begin
-                
+                if (data_input_count == 0) begin
+                    receiving_state <= idle;
+                end
+                mosi <= packet_data_input_save[data_input_count];
+                data_input_count <= data_input_count - 1;
             end
         endcase
     end
