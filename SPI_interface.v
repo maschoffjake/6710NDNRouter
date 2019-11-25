@@ -201,7 +201,7 @@ always@(posedge clk, posedge rst)
                 if (TX_valid) begin
                     // Send start bit to start transfer and change states
                     mosi <= LOW;
-                    receiving_state <= send_meta_data;
+                    transmitting_state <= send_meta_data;
 
                     // Save data to transfer since it is only valid for 1 clk cycle
                     packet_meta_data_input_save <= packet_meta_data_input;
