@@ -40,7 +40,7 @@ define_design_lib $design -path $DESIGN_LIB
 
 #  Analyze the Verilog sources
 puts "-i- Analyze Verilog sources"
-analyze -format sverilog $HDL_FILES -library $design
+analyze -format verilog $HDL_FILES -library $design
 
 #  Elaborate the design
 puts "-i- Elaborate design"

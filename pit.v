@@ -1,5 +1,6 @@
 module PIT(table_entry, address, current_byte, in_data, read_data, out_data, write_enable, in_bit, out_bit, start_bit, fib_out, clk, reset);
 
+// I changed this to 11 bits b/c pit never checks requested bit
 input [10:0] table_entry;
 input [7:0] in_data, read_data;
 input in_bit, out_bit, clk, reset;
