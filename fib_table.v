@@ -354,7 +354,6 @@ end
 always @(posedge clk, posedge rst) begin
 	if (rst) begin
 		outgoing_state <= 0;
-        outgoing_next_state <= 0;
         prefix <= 0;
         metadata <= 0;
         hashtable_value <= 0;
