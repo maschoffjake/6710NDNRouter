@@ -107,7 +107,7 @@ always@(posedge clk, posedge rst) begin
                 prefix_count <= 63;
                 data_count <= 255;
                 prefix_byte_count <= 7;
-                data_byte_count <= 32;
+                data_byte_count <= 31;
 
                 // Wait for miso to go low (start bit)
                 if (!miso) begin
@@ -144,7 +144,7 @@ always@(posedge clk, posedge rst) begin
                     // If this was an interest packet, done receving, set bit high so FIB can grab data and go back to idle
                     if (isInterestPacket) begin
                         RX_valid <= HIGH;
-                        receiving_state <= send_data_to_fib;
+                        receiving_state <= send_metadata_to_fib;
                     end
                     // Otherwise we must receive the data content of the packet as well
                     else begin
@@ -160,7 +160,7 @@ always@(posedge clk, posedge rst) begin
                 // Time to move states and let FIB know that the data packet is and forward data!
                 if (data_count == 0) begin
                     RX_valid <= HIGH;
-                    receiving_state <= send_data_to_fib;
+                    receiving_state <= send_metadata_to_fib;
                 end
                 packet_data[data_count] <= miso;
                 data_count <= data_count - 1;
@@ -182,7 +182,8 @@ always@(posedge clk, posedge rst) begin
                     end
                 end
                 // Grab the 8 MSB and shift them out to grab next 8 MSBs
-                output_shift_register <= (packet_prefix[63:56]) << 8;
+                output_shift_register <= packet_prefix[63:56];
+				packet_prefix <= packet_prefix << 8;
                 prefix_byte_count <= prefix_byte_count - 1;
             end
             send_data_to_fib: begin
@@ -191,7 +192,8 @@ always@(posedge clk, posedge rst) begin
                     receiving_state <= idle;
                 end
                 // Grab the 8 MSB and shift them out to grab next 8 MSBs
-                output_shift_register <= (packet_data[255:248]) << 8;
+                output_shift_register <= packet_data[255:248];
+				packet_data <= packet_data << 8;
                 data_byte_count <= data_byte_count - 1;
             end
             default: begin
@@ -253,10 +255,11 @@ always@(posedge clk, posedge rst)
 			packet_meta: begin
 				if(meta_data_input_count > 0) begin
 				packet_meta_data_input_save <= input_shift_register;
-				meta_data_input_count = meta_data_input_count - 1;
+				meta_data_input_count <= meta_data_input_count - 1;
 				end
-				else begin
+				if(meta_data_input_count == 1) begin
 				transmitting_state <= packet_prefix_state;
+				meta_data_input_count <= 7;
 				end
 			end
 			packet_prefix_state: begin
@@ -264,17 +267,19 @@ always@(posedge clk, posedge rst)
 					packet_prefix_input_save <= (packet_prefix_input_save << 8) + input_shift_register;
 					prefix_input_count <= prefix_input_count - 1;
 				end
-				else begin
+				if(prefix_input_count == 1) begin
 					transmitting_state <= packet_data_state;
+                	prefix_input_count <= 63;
 				end
 			end
 			packet_data_state: begin
 				if(data_input_count > 0) begin
 					packet_data_input_save <= (packet_data_input_save << 8) + input_shift_register;	
-					data_input_count = data_input_count - 1;			
+					data_input_count <= data_input_count - 1;			
 				end
-				else begin
+				if(data_input_count == 1) begin
 					transmitting_state <= send_meta_data;
+                 	data_input_count <= 255;
 				end
 			end 
             send_meta_data: begin
