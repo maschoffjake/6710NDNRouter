@@ -29,7 +29,7 @@
 module spi_mcu(
     input sclk,
     input mosi,
-    output mosi,
+    output miso,
     input ss,
 
     // Overall inputs
