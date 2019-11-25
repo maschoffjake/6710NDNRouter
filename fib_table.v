@@ -60,7 +60,7 @@ hash HASH_INCOMING(hash_prefix_in, hash_value_in, clk, rst);
 /* 
     Saving logic. Used for saving the incoming prefix data to the fib hash table.
 */
-parameter wait_state = 0, receive_metadata = 1, receive_prefix = 2, receive_data = 3, wait_for_response = 4, pass_data_to_pit = 5;
+parameter wait_state = 0, receive_metadata = 1, receive_prefix = 2, receive_data = 3, wait_for_response = 4, pass_data_to_pit = 5, get_hash_to_save_to_fib = 6, save_data_to_fib = 7;
 reg [2:0] incoming_data_state;
 reg [2:0] incoming_data_next_state;
 reg [63:0] prefix_from_SPI;
@@ -77,6 +77,7 @@ reg [4:0] data_byte_count;
 always@(RX_valid, incoming_data_state) begin
     // Default values (no latches)
     incoming_data_next_state <= 0;
+    hash_prefix_in <= 0;
 
     case (incoming_data_state)
         wait_state: begin
@@ -94,8 +95,8 @@ always@(RX_valid, incoming_data_state) begin
         receive_prefix: begin
             if(prefix_byte_count == 0) begin
                 if (isInterestPacket) begin
-                    // If it's interest, we are done parsing and back to waiting!
-                    incoming_data_next_state <= wait_state;
+                    // If it's interest, we are done parsing and can now save this value to the fib!
+                    incoming_data_next_state <= get_hash_to_save_to_fib;
                 end	
                 else begin
                     // If it is a data packet we still need to receive that data
@@ -118,9 +119,9 @@ always@(RX_valid, incoming_data_state) begin
             end
         end
         wait_for_response: begin
-            // If the data packet wasn't requested (it was rejected) we can just go back to wait state
+            // If the data packet wasn't requested (it was rejected) we can just begin saving this value to the fib
             if (rejected) begin
-                incoming_data_next_state <= wait_state;
+                incoming_data_next_state <= get_hash_to_save_to_fib;
             end
             else if (start_send_to_pit) begin
                 // The data was requested, so we must send it to the PIT!
@@ -132,12 +133,21 @@ always@(RX_valid, incoming_data_state) begin
         end
         pass_data_to_pit: begin
             if (data_byte_count == 0) begin
-                // Done passing data to the PIT, back to waiting
-                incoming_data_next_state <= wait_state;
+                // Done passing data to the PIT, now save this incoming packet data to FIB table so we can know for future use
+                incoming_data_next_state <= get_hash_to_save_to_fib;
             end
             else begin
                 incoming_data_next_state <= pass_data_to_pit;
             end
+        end
+        get_hash_to_save_to_fib: begin
+            // Set hash input
+            hash_prefix_in <= prefix_from_SPI;
+            incoming_data_next_state <= save_data_to_fib;
+        end
+        save_data_to_fib: begin
+            // Back to idle
+            incoming_data_next_state <= wait_state;
         end
         default: begin
             incoming_data_next_state <= wait_state;
@@ -158,6 +168,7 @@ always@(posedge clk, posedge rst) begin
         prefix_byte_count <= 0;
         data_byte_count <= 0;
         isInterestPacket <= 0;
+        saved_hash_in <= 0;
     end
     else begin
         case (incoming_data_state)
@@ -172,6 +183,7 @@ always@(posedge clk, posedge rst) begin
             end
 			receive_metadata: begin
 				metadata_from_SPI <= data_SPI_to_FIB;
+                isInterestPacket <= data_SPI_to_FIB[6]; // 6th bit is high if it is an interest packet, or low if it is a data packet
 				incoming_data_state <= incoming_data_next_state;
 			end
 			receive_prefix: begin
@@ -209,6 +221,17 @@ always@(posedge clk, posedge rst) begin
                 data_FIB_to_PIT <= data_from_SPI[255:248];
                 data_from_SPI <= data_from_SPI << 8;
                 data_byte_count <= data_byte_count - 1;
+                incoming_data_state <= incoming_data_next_state;
+            end
+            get_hash_to_save_to_fib: begin
+                // Latch hash value after a cycle
+                saved_hash_in <= hash_value_in;
+                incoming_data_state <= incoming_data_next_state;
+            end
+            save_data_to_fib: begin
+                // Set the valid bit high for this prefix that was received
+                hashTable[metadata_from_SPI[5:0]][saved_hash_in] = HIGH;
+                incoming_data_state <= incoming_data_next_state;
             end
             default: begin
                 incoming_data_state <= incoming_data_next_state;
