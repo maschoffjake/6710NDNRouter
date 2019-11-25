@@ -84,7 +84,6 @@ end
 initial begin
 	// Create clock
 	clk = 1'b0;
-	#100;
 	forever #10 clk = ~clk;
 end
 
