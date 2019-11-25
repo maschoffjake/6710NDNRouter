@@ -3,12 +3,12 @@ module spi_interface_module();
 // SPI interfaces
 wire sclk;
 wire mosi;
-output reg miso;
+reg miso;
 wire cs;
 
 // Overall inputs
-output clk;
-output reg rst;
+reg clk;
+reg rst;
 
 // Receiving output
 wire          RX_valid;  // Valid pulse for 1 cycle for RX byte to know data is ready
@@ -17,10 +17,10 @@ wire [63:0]   packet_prefix;
 wire [255:0]  packet_data;
 
 // Transferring input
-output reg               TX_valid;                   // Valid pulse for 1 cycle for TX byte
-output reg [7:0]         packet_meta_data_input;     
-output reg [63:0]        packet_prefix_input;
-output reg [255:0]       packet_data_input;
+reg               TX_valid;                   // Valid pulse for 1 cycle for TX byte
+reg [7:0]         packet_meta_data_input;     
+reg [63:0]        packet_prefix_input;
+reg [255:0]       packet_data_input;
 
 // Instantiate the module
 spi_interface spi_interface_module(
