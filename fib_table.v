@@ -12,6 +12,7 @@ module fib_table(
     input fib_out_bit,
     input start_send_to_pit,
     input rejected,
+    input [7:0] data_PIT_to_FIB,
 
     // DATA INPUTS
     input RX_valid,
@@ -220,7 +221,7 @@ wire [9:0] hash_value_out;
 hash HASH_OUTGOING(hash_prefix_out, hash_value_out, clk, rst);
 
 // Transmit longest matching prefix, total prefix, and meta data once longest prefix is found
-parameter get_hash = 1, check_for_valid_prefix = 2, send_meta_data_to_spi = 3, send_total_prefix_to_spi = 4, send_longest_prefix_to_spi = 5, receive_data_from_PIT = 6;
+parameter get_hash = 1, check_for_valid_prefix = 2, send_meta_data_to_spi = 3, send_total_prefix_to_spi = 4, send_longest_prefix_to_spi = 5, receive_data_from_PIT = 6, send_data_to_spi = 7;
 reg [2:0] outgoing_state;
 reg [2:0] outgoing_next_state;
 
@@ -236,6 +237,16 @@ reg [63:0] total_prefix;
 // Counts for what byte has been sent out
 reg [2:0] longest_matching_prefix_count;
 reg [2:0] total_prefix_count;
+
+// Reg used to tell when to also send data to the SPI module as well (for data packets)
+reg send_data;
+reg [255:0] data_to_send;
+
+// Counter used to read in what byte we have read in from the PIT
+reg [4:0] pit_input_byte_counter;
+
+// Counter used to keep track of what byte we have sent to SPI from FIB for data packet contents
+reg [4:0] fib_to_spi_data_count;
 
 always@(fib_out_bit, outgoing_state) begin
 
@@ -284,8 +295,15 @@ always@(fib_out_bit, outgoing_state) begin
         end
         send_total_prefix_to_spi: begin
             if (total_prefix_count == 0) begin
-                // Done sending the total prefix, now send the longest prefix to spi
-                outgoing_next_state <= send_longest_prefix_to_spi;  
+                // Done sending the total prefix
+                if (data_packet) begin
+                    // Now need to send out the data, not the longest matching prefix, since it is a data packet
+                    outgoing_next_state <= send_data_to_spi;
+                end
+                else begin
+                    // Interest packet, so just send out longest matching prefix as well
+                    outgoing_next_state <= send_longest_prefix_to_spi; 
+                end 
             end
             else begin
                 outgoing_next_state <= send_total_prefix_to_spi;
@@ -298,6 +316,25 @@ always@(fib_out_bit, outgoing_state) begin
             end
             else begin
                 outgoing_next_state <= send_longest_prefix_to_spi;
+            end
+        end
+        receive_data_from_PIT: begin
+            // Done receiving data
+            if (pit_input_byte_counter == 0) begin
+                // Now send the meta data, prefix, and data, so set the next state to send_meta_data_to_spi so we can begin outgoing data push
+                outgoing_next_state <= send_meta_data_to_spi;
+            end
+            else begin
+                outgoing_next_state <= receive_data_from_PIT;
+            end
+        end
+        send_data_to_spi: begin
+            if (fib_to_spi_data_count == 0) begin
+                // Done sending data, back to idle
+                outgoing_next_state <= wait_state;
+            end
+            else begin
+                outgoing_next_state <= send_data_to_spi;
             end
         end
         default: begin
@@ -318,6 +355,10 @@ always @(posedge clk, posedge rst) begin
         total_prefix <= 0;
         total_prefix_count < 0;
         longest_matching_prefix_count <= 0;
+        data_packet <= 0;
+        data_to_send <= 0;
+        pit_input_byte_counter <= 0;
+        fib_to_spi_data_count <= 0;
     end;
     else begin
         case (outgoing_state)
@@ -335,6 +376,12 @@ always @(posedge clk, posedge rst) begin
                 total_prefix_count <= 7;
                 longest_matching_prefix_count <= 7;
 
+                // Default to no data packet coming in
+                data_packet <= 0;
+
+                // Initialize pit count to MSB for reading in data from PIT incase there is a data packet
+                pit_input_byte_counter <= 31;
+                fib_to_spi_data_count <= 31;
             end
             get_hash: begin
                 // Save the hash value on clk edge
@@ -359,16 +406,31 @@ always @(posedge clk, posedge rst) begin
                 outgoing_state <= outgoing_next_state;
             end
             send_total_prefix_to_spi: begin
-                data_FIB_to_SPI <= total_prefix[63:56];
+                // Shifting 8 bits at a time
+                data_FIB_to_SPI <= total_prefix[63:56]; // Shifting MSB
                 total_prefix <= total_prefix << 8;
                 outgoing_state <= outgoing_next_state;
                 total_prefix_count <= total_prefix_count - 1;
             end
             send_longest_prefix_to_spi: begin
-                data_FIB_to_SPI <= prefix;
+                // Shifting 8 bits at a time
+                data_FIB_to_SPI <= prefix[63:56]; // Shifting MSB
                 prefix <= prefix << 8;
                 outgoing_state <= outgoing_next_state;
                 longest_matching_prefix_count <= longest_matching_prefix_count - 1;
+            end
+            receive_data_from_PIT: begin
+                data_packet <= HIGH;
+                data_to_send <= (data_to_send << 8) + data_PIT_to_FIB;
+                outgoing_state <= outgoing_next_state;
+                pit_input_byte_counter <= pit_input_byte_counter - 1;
+            end
+            send_data_to_spi: begin
+                // Shifting 8 bits at a time
+                data_FIB_to_SPI <= data_packet[255:248];    // Shifting 8 MSB
+                data_packet <= data_packet << 8;
+                outgoing_state <= outgoing_next_state;
+                fib_to_spi_data_count <= fib_to_spi_data_count - 1;
             end
             default: begin
                 outgoing_state <= outgoing_next_state;
