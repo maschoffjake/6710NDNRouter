@@ -23,6 +23,8 @@
                     3rd - 8th bit: length of the packet prefix content header (MSB sent first)
                 2nd - 9th byte:
                     All 64-bits represent the prefix content header (MSB sent first) of the requested data
+				10th - 18th byte:
+					All 64-bits represent the longest matching prefix.
 */
 module spi_interface(
 
@@ -44,9 +46,7 @@ module spi_interface(
 
     // Transferring input
     input               TX_valid,                   // Valid pulse for 1 cycle for TX byte
-    input [7:0]         packet_meta_data_input,     
-    input [63:0]        packet_prefix_input,
-    input [255:0]       packet_data_input 
+    input [7:0]         input_shift_register
 );
 
 // Counts for registers (where to insert bits)
@@ -170,8 +170,8 @@ reg [7:0]    packet_meta_data_input_save;
 reg [63:0]   packet_prefix_input_save;
 reg [255:0]  packet_data_input_save;
 
-parameter send_meta_data = 1, send_prefix = 2, send_data = 3;
-reg [1:0] transmitting_state;
+parameter packet_meta = 1, packet_prefix = 2, packet_data = 3, send_meta_data = 4, send_prefix = 5, send_data = 6;
+reg [2:0] transmitting_state;
 
 /*
     TRANSFERRING DATA STATE MACHINE
@@ -193,26 +193,42 @@ always@(posedge clk, posedge rst)
         case (transmitting_state)
             idle: begin
                 // Set counts to MSB of each registers
-                meta_data_input_count <= 7;
-                prefix_input_count <= 63;
-                data_input_count <= 255;
+                prefix_input_count <= 8;
+                data_input_count <= 32;
                 transferring_data_packet <= LOW; // Default to low
 
                 if (TX_valid) begin
                     // Send start bit to start transfer and change states
                     mosi <= LOW;
-                    transmitting_state <= send_meta_data;
-
-                    // Save data to transfer since it is only valid for 1 clk cycle
-                    packet_meta_data_input_save <= packet_meta_data_input;
-                    packet_data_input_save <= packet_data_input;
-                    packet_prefix_input_save <= packet_prefix_input;
+                    transmitting_state <= packet_meta;
                 end
                 // Keep data line high (so the interface knows nothing is transferring)
                 else begin
                     mosi <= HIGH;
                 end
-            end 
+            end
+			packet_meta: begin
+				packet_meta_data_input_save <= input_shift_register;
+				transmitting_state <= packet_prefix;
+			end
+			packet_prefix: begin
+				if(prefix_input_count > 0) begin
+					packet_prefix_input_save <= (packet_prefix_input_save << 8) + input_shift_register;
+					prefix_input_count <= prefix_input_count - 1;
+				end
+				else begin
+					transmitting_state <= packet_data;
+				end
+			end
+			packet_data: begin
+				if(prefix_data_count > 0) begin
+					packet_data_input_save <= (packet_data_input_save << 8) + input_shift_register;	
+					prefix_data_count = prefix_data_count - 1;			
+				end
+				else begin
+					transmitting_state <= send_meta_data;
+				end
+			end 
             send_meta_data: begin
                 if (meta_data_input_count == 0) begin
                     transmitting_state <= send_prefix;
@@ -239,7 +255,7 @@ always@(posedge clk, posedge rst)
             end
             send_data: begin
                 if (data_input_count == 0) begin
-                    receiving_state <= idle;
+                    transmitting_state <= idle;
                 end
                 mosi <= packet_data_input_save[data_input_count];
                 data_input_count <= data_input_count - 1;

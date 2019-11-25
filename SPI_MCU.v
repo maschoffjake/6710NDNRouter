@@ -14,6 +14,8 @@
                     3rd - 8th bit: length of the packet prefix content header (MSB sent first)
                 2nd - 9th byte:
                     All 64-bits represent the prefix content header (MSB sent first) of the requested data
+				10th - 18th byte:
+					All 64-bits represent the longest matching prefix.
 
     Data Packet:
                 1st byte:
