@@ -72,7 +72,7 @@ initial begin
     start_outgoing_packet = 1;
 end
 
-always@(posedge start_incoming_packet) begin
+always@(posedge start_outgoing_packet) begin
     TX_valid <= 1;
     packet_meta_data_input <= packet_meta_data_test;     
     packet_prefix_input <= packet_prefix_test;
