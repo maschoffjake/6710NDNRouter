@@ -12,15 +12,14 @@ reg rst;
 
 // Receiving output
 wire          RX_valid;  // Valid pulse for 1 cycle for RX byte to know data is ready
-wire [7:0]    packet_meta_data;
-wire [63:0]   packet_prefix;
-wire [255:0]  packet_data;
+wire		  output_shift_register;
 
 // Transferring input
 reg               TX_valid;                   // Valid pulse for 1 cycle for TX byte
-reg [7:0]         packet_meta_data_input;     
-reg [63:0]        packet_prefix_input;
-reg [255:0]       packet_data_input;
+wire [7:0]        input_shift_register;
+
+reg [1:0] state;
+parameter tx = 0, waiting = 1, sending = 2;    
 
 // Instantiate the module
 spi_interface spi_interface_module(
@@ -31,13 +30,9 @@ spi_interface spi_interface_module(
     .clk(clk),
     .rst(rst),
     .RX_valid(RX_valid),
-    .packet_meta_data(packet_meta_data),
-    .packet_prefix(packet_prefix),
-    .packet_data(packet_data),
+	.output_shift_register(output_shift_register),
     .TX_valid(TX_valid),
-    .packet_data_input(packet_data_input),
-    .packet_prefix_input(packet_prefix_input),
-    .packet_meta_data_input(packet_meta_data_input)
+	.input_shift_register(input_shift_register)
 );
 
 /*
@@ -47,44 +42,51 @@ reg start_incoming_packet;
 reg start_outgoing_packet;
 
 reg [7:0]         packet_meta_data_test;     
-reg [63:0]        packet_prefix_test;
+reg [71:0]        packet_prefix_test;
 reg [255:0]       packet_data_test;
+reg [327:0]		  transmitting_data_test;
 
+assign input_shift_register = transmitting_data_test[327:320];
 
 initial begin
     TX_valid = 0;
-    packet_meta_data_input = 0;
-    packet_prefix_input = 0;
-    packet_data_input = 0;
     start_incoming_packet = 0;
     start_outgoing_packet = 0;
+	clk = 0;
     rst = 0;
-    #10;
-    rst = 1;
-    #10;
-    rst = 0;
-    #20;
+	state = 0;
 
     // Start outgoing packet
     packet_meta_data_test = 8'b00101000;
     packet_prefix_test = 64'd129;
     packet_data_test = "here is data";
-    start_outgoing_packet = 1;
+	transmitting_data_test = {packet_meta_data_test, packet_prefix_test, packet_data_test};
 end
 
-always@(posedge start_outgoing_packet) begin
-    TX_valid <= 1;
-    packet_meta_data_input <= packet_meta_data_test;     
-    packet_prefix_input <= packet_prefix_test;
-    packet_data_input <= packet_data_test;
-    #20;
-    TX_valid <= 0;
-end
 
-initial begin
+always
+begin
 	// Create clock
-	clk = 1'b0;
-	forever #10 clk = ~clk;
+	#10 clk = ~clk;
+	if(clk) begin
+		case(state)
+		tx:
+		begin
+			TX_valid <= 1;
+			state <= waiting;
+		end
+		waiting:
+		begin
+			TX_valid <= 0;
+			state <= sending;
+		end
+		sending:
+		begin
+			transmitting_data_test <= transmitting_data_test << 8;
+		end
+		endcase
+
+	end
 end
 
 endmodule
