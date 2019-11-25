@@ -42,9 +42,8 @@ module (
     input  [7:0]     TX_byte,   // Byte to serialize to MOSI
 );
 
-// Able to send and receive up to 1024 bytes at a time
-reg [9:0] RX_count;
-reg [9:0] TX_count;
+// RX count used to grab the second bit of transmission to know the type of the packet
+reg RX_count;
 
 // Containers for packets
 reg [7:0] packet_meta_data;
@@ -56,12 +55,15 @@ reg [2:0] meta_data_count;
 reg [5:0] prefix_count;
 reg [7:0] data_count;
 
+// Flag for if the current packet being received is a interest/data
+reg isInterestPacket;
+
 localparam HIGH = 1;
 localparam LOW = 0;
 
 reg [1:0] receiving_state;
 
-localparam idle = 0, receiving = 1;, receiving_data_packet = 2, receiving_interest_packet = 3;
+localparam idle = 0, receiving_meta_packet_info = 1;, receiving_packet_prefix = 2, receiving_packet_data = 3;
 
 /* 
     Just assign the chip select low for now, since we are only interfacing with one interface.
@@ -86,37 +88,70 @@ always@(posedge clk, posedge rst) begin
     else begin
         case (receiving_state)
             idle: begin
-                packet_meta_data <= 8'd0;
-                packet_prefix <= 64'd0;;
-                packet_data <= 256'd0;
+                packet_meta_data <= 0;
+                packet_prefix <= 0;;
+                packet_data <= 0;
+                meta_data_count <= 7;
+                prefix_count <= 63;
+                data_count <= 256;
+                RX_count <= 0;
+
                 // Wait for miso to go low (start bit)
                 if (~miso) begin
                     receiving_state <= receiving;
                 end
-                RX_count <= 0;
             end 
-            receiving: begin
+            receiving_meta_packet_info: begin
                 // First bit of a packet is a filler bit, so grab second. If it's high, interest packet!
-                if (RX_count == 1) begin
-                    if (miso)
-                        receiving_state <= receiving_interest_packet;
-                    else
-                        receiving_state <= receiving_data_packet;
+                if (meta_data_count == 6) begin
+                    if (miso) begin
+                        isInterestPacket = HIGH;
+                    end
+                    else begin
+                        isInterestPacket = LOW;
+                    end
                     // Set the packet type in the packet container
-                    packet_meta_data[6] <= miso;
+                    packet_meta_data[meta_data_count] <= miso;
+                    meta_data_count <= meta_data_count - 1;
                 end
-                RX_count <= RX_count + 1'b1;
+                // Grab after the 2nd bit to continue to fill in the meta packet info
+                else if (meta_data_count > 1) begin
+                    packet_meta_data[meta_data_count] <= miso;
+                end
+                // Once all meta data has been received, time to receive packet prefix!
+                else if (meta_data_count == 0) begin
+                    packet_meta_data[meta_data_count] <= miso;
+                    receiving_state <= receiving_packet_prefix;
+                end
+                meta_data_count <= meta_data_count - 1;
             end
-            receiving_data_packet: begin
-                if (RX_count == )
+            receiving_packet_prefix: begin
+                // Time to move states 
+                if (prefix_count == 0) begin
+                    // If this was an interest packet, done receving, set bit high so FIB can grab data and go back to idle
+                    if (isInterestPacket) begin
+                        RX_valid <= HIGH;
+                        receiving_state <= idle;
+                    end
+                    // Otherwise we must receive the data content of the packet as well
+                    else begin
+                        receiving_state <= receiving_packet_data;
+                    end    
+                end
 
+                // Save data and increment counters
+                packet_prefix[prefix_count] <= miso; 
+                prefix_count <= prefix_count - 1;
             end
-            receiving_interest_packet: begin
+            receiving_packet_data: begin
 
-
-            end
-            default: begin
-                receiving_state <= receiving_next_state;
+                // Time to move states and let FIB know that the data packet is ready!
+                if (data_count == 0) begin
+                    RX_valid <= HIGH;
+                    receiving_state <= idle;
+                end
+                packet_data[data_count] <= miso;
+                data_count <= data_count - 1;
             end
         endcase
     end
