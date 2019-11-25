@@ -65,7 +65,7 @@ localparam LOW = 0;
 reg [1:0] receiving_state;
 
 // State names
-localparam idle = 0, receiving_meta_packet_info = 1;, receiving_packet_prefix = 2, receiving_packet_data = 3;
+localparam idle = 0, receiving_meta_packet_info = 1, receiving_packet_prefix = 2, receiving_packet_data = 3;
 
 /* 
     Just assign the chip select low for now, since we are only interfacing with one interface.
@@ -84,7 +84,7 @@ always@(posedge clk, posedge rst) begin
         RX_valid <= 0;
         receiving_state <= idle;
         packet_meta_data <= 8'd0;
-        packet_prefix <= 64'd0;;
+        packet_prefix <= 64'd0;
         packet_data <= 256'd0;
     end
     else begin
@@ -92,7 +92,7 @@ always@(posedge clk, posedge rst) begin
             idle: begin
                 RX_valid <= 0;
                 packet_meta_data <= 0;
-                packet_prefix <= 0;;
+                packet_prefix <= 0;
                 packet_data <= 0;
                 meta_data_count <= 7;
                 prefix_count <= 63;
@@ -100,7 +100,7 @@ always@(posedge clk, posedge rst) begin
 
                 // Wait for miso to go low (start bit)
                 if (~miso) begin
-                    receiving_state <= receiving;
+                    receiving_state <= receiving_meta_packet_info;
                 end
             end 
             receiving_meta_packet_info: begin
@@ -190,7 +190,7 @@ always@(posedge clk, posedge rst)
         packet_prefix_input_save <= 0;
     end
     else begin
-        case (transmitting_state):
+        case (transmitting_state)
             idle: begin
                 // Set counts to MSB of each registers
                 meta_data_input_count <= 7;
@@ -201,7 +201,7 @@ always@(posedge clk, posedge rst)
                 if (TX_valid) begin
                     // Send start bit to start transfer and change states
                     mosi <= LOW;
-                    receiving_state <= send_meta_data
+                    receiving_state <= send_meta_data;
 
                     // Save data to transfer since it is only valid for 1 clk cycle
                     packet_meta_data_input_save <= packet_meta_data_input;
