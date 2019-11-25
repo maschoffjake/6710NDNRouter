@@ -227,11 +227,11 @@ always@(posedge clk, posedge rst)
                 if (prefix_input_count == 0) begin
                     // Check to see if we are transferring data
                     if (transferring_data_packet) begin
-                        receiving_state <= send_data;
+                        transmitting_state <= send_data;
                     end
                     // If not, go back to idle
                     else begin
-                        receiving_state <= idle;
+                        transmitting_state <= idle;
                     end
                 end
                 mosi <= packet_prefix_input_save[prefix_input_count];
