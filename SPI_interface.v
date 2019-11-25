@@ -107,7 +107,7 @@ always@(posedge clk, posedge rst) begin
                 prefix_count <= 63;
                 data_count <= 255;
                 prefix_byte_count <= 7;
-                data_byte_count <= 32;
+                data_byte_count <= 31;
 
                 // Wait for miso to go low (start bit)
                 if (!miso) begin
@@ -144,7 +144,7 @@ always@(posedge clk, posedge rst) begin
                     // If this was an interest packet, done receving, set bit high so FIB can grab data and go back to idle
                     if (isInterestPacket) begin
                         RX_valid <= HIGH;
-                        receiving_state <= send_data_to_fib;
+                        receiving_state <= send_metadata_to_fib;
                     end
                     // Otherwise we must receive the data content of the packet as well
                     else begin
@@ -160,7 +160,7 @@ always@(posedge clk, posedge rst) begin
                 // Time to move states and let FIB know that the data packet is and forward data!
                 if (data_count == 0) begin
                     RX_valid <= HIGH;
-                    receiving_state <= send_data_to_fib;
+                    receiving_state <= send_metadata_to_fib;
                 end
                 packet_data[data_count] <= miso;
                 data_count <= data_count - 1;
@@ -182,7 +182,8 @@ always@(posedge clk, posedge rst) begin
                     end
                 end
                 // Grab the 8 MSB and shift them out to grab next 8 MSBs
-                output_shift_register <= (packet_prefix[63:56]) << 8;
+                output_shift_register <= packet_prefix[63:56];
+				packet_prefix <= packet_prefix << 8;
                 prefix_byte_count <= prefix_byte_count - 1;
             end
             send_data_to_fib: begin
@@ -191,7 +192,8 @@ always@(posedge clk, posedge rst) begin
                     receiving_state <= idle;
                 end
                 // Grab the 8 MSB and shift them out to grab next 8 MSBs
-                output_shift_register <= (packet_data[255:248]) << 8;
+                output_shift_register <= packet_data[255:248];
+				packet_data <= packet_data << 8;
                 data_byte_count <= data_byte_count - 1;
             end
             default: begin
