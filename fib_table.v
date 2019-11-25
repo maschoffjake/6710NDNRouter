@@ -356,7 +356,6 @@ always @(posedge clk, posedge rst) begin
 		outgoing_state <= 0;
         prefix <= 0;
         metadata <= 0;
-        hashtable_value <= 0;
         saved_hash_out <= 0;
         total_prefix <= 0;
         total_prefix_count <= 0;
