@@ -155,9 +155,11 @@ always@(posedge clk) begin
                 pit_in_prefix <= prefix_input_from_pit;
                 pit_in_metadata <= metadata_input_from_pit;
             end
-            fib_out_bit <= LOW;
-            pit_in_prefix <= LOW;
-            pit_in_metadata <= LOW;
+            else begin
+                fib_out_bit <= LOW;
+                pit_in_prefix <= LOW;
+                pit_in_metadata <= LOW; 
+            end
         end
         default: begin
             state_interest_packet_outgoing <= 0;
