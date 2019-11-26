@@ -75,7 +75,7 @@ reg isInterestPacket;
 reg [2:0] prefix_byte_count;
 reg [4:0] data_byte_count;
 
-always@(RX_valid, incoming_data_state) begin
+always@(RX_valid, incoming_data_state, prefix_byte_count, data_byte_count, rejected, start_send_to_pit) begin
     // Default values (no latches)
     incoming_data_next_state <= 0;
     hash_prefix_in <= 0;
@@ -213,6 +213,7 @@ always@(posedge clk, posedge rst) begin
                 incoming_data_state <= incoming_data_next_state;
 			end 
             wait_for_response: begin
+                prefix_ready <= LOW;
                 incoming_data_state <= incoming_data_next_state;
                 // Reset byte count, since we must now SEND 32 bytes
                 data_byte_count <= 31;
@@ -225,6 +226,7 @@ always@(posedge clk, posedge rst) begin
                 incoming_data_state <= incoming_data_next_state;
             end
             get_hash_to_save_to_fib: begin
+                prefix_ready <= LOW;
                 // Latch hash value after a cycle
                 saved_hash_in <= hash_value_in;
                 incoming_data_state <= incoming_data_next_state;
