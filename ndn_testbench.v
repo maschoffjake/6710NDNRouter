@@ -1,27 +1,15 @@
 module ndn_testbench();
 
-reg clk_tb;
-reg rst_tb;
-reg [2:0] state;
+reg clk,
+reg rst,
 
-// Incoming inputs
-reg [63:0] prefix_tb;
-reg [5:0] len_tb;
-reg out_bit_tb;
+reg mosi_from_mcu;
+wire miso_to_mcu;
+reg cs_from_mcu;
 
-// Outgoing inputs
-reg [5:0] data_in_len_tb;
-reg [63:0] data_in_prefix_tb;
-reg data_ready_tb;
-reg [7:0] in_data_tb;
-
-
-wire clk_out_tb;
-wire [63:0] longest_matching_prefix_tb;
-wire [5:0] longest_matching_prefix_len_tb;
-wire ready_for_data_tb;
-wire [63:0] total_content_tb;
-wire [5:0] total_content_len_tb;
+input miso_from_interface;
+wire mosi_to_interface;
+input cs_to_interface;
 
 parameter idle = 3'b000;
 parameter sending = 3'b001;

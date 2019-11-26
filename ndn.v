@@ -10,7 +10,7 @@ module ndn(
     
     input miso_from_interface;
     output mosi_to_interface;
-    input cs_to_interface;
+    output cs_to_interface;
 );
 
 wire pit_in_bit;            // PITHASH --> PIT
@@ -38,13 +38,13 @@ wire [7:0]data_spi_to_fib;
 assign user_data = out_data;
 
 pit_hash_table pit_hash_table_module (
-    .SPI_to_PIT_prefix         		(SPI_to_PIT_prefix),         // input [63:0]
+    .SPI_to_PIT_prefix         	(SPI_to_PIT_prefix),         // input [63:0]
     .prefix_ready   			(prefix_ready),   // input
     .FIB_to_PIT_prefix 			(FIB_to_PIT_prefix), // input [63:0]
-    .length    				(len),    		  // input [5:0]
+    .length    				    (len),    		  // input [5:0]
     .FIB_to_PIT_metadata		(FIB_to_PIT_metadata),// input [7:0]
     .out_bit        			(out_bit),        // input
-    .clk           			(clk),            // input
+    .clk           			    (clk),            // input
     .rst            			(rst),            // input
     .table_entry    			(table_entry),    // output [11:0]
     .metadata       			(metadata),        // output [7:0]
@@ -94,7 +94,7 @@ single_port_ram ram (
 	.addr   (address),      // input [9:0] 
 	.byte   (current_byte), // input [9:0]
 	.we     (write_enable), // input 
-    	.clk    (clk),          // input 
+    .clk    (clk),          // input 
 	.rst    (rst),		// input
 	.q      (read_data)     // output [7:0] 
 );
