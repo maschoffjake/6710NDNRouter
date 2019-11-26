@@ -1,7 +1,5 @@
 /*
     This module is used for creating the FIB table of the NDN router
-    TODO: instead of sending size to the hash table, zero out the top bits
-	  of the prefix we don't want
 */
 
 module fib_table(
