@@ -1,64 +1,58 @@
 module fib_table_testbench ();
 
-// PIT INPUTS
-reg [63:0] pit_in_prefix;
-reg [5:0] pit_in_len;
-reg fib_out_bit;
-reg start_send_to_pit;
-reg rejected;
+// PIT HASH TABLE --> FIB
+reg [63:0] pit_in_prefix,
+reg [7:0] pit_in_metadata,
+reg rejected,
 
-// DATA INPUTS
-reg [5:0] data_in_len;
-reg [63:0] data_in_prefix;
-reg data_ready;
-reg [7:0] data_in;
+// PIT --> FIB
+reg fib_out_bit,
+reg start_send_to_pit,
+reg [7:0] data_PIT_to_FIB,
+
+// SPI --> FIB
+reg RX_valid,
+reg [7:0] data_SPI_to_FIB,
 
 // OVERALL INPUTS 
-reg clk;
-reg rst;
+reg clk,
+reg rst,
 
-// PIT OUTPUTS
-wire [5:0] pit_out_len;
-wire [63:0] pit_out_prefix;
-wire prefix_ready;
-wire [7:0] out_data;
+// FIB --> PIT HASH TABLE
+wire [63:0] pit_out_prefix,
+wire prefix_ready,
+wire [7:0] pit_out_metadata,
 
-// DATA OUTPUTS
-wire [63:0] longest_matching_prefix;
-wire [5:0] longest_matching_prefix_len;
-wire ready_for_data;
-wire clk_out;
+// FIB --> PIT
+wire [7:0] data_FIB_to_PIT,
 
-// Values used for simulation
-reg start_outgoing_packet_simulation;
-reg start_incoming_packet_simulation;
-reg [63:0] prefix_value;
-reg [5:0] prefix_length;
+// FIB --> SPI
+wire FIB_to_SPI_data_flag,
+wire [7:0] data_FIB_to_SPI
 
 fib DUT (
     .pit_in_prefix(pit_in_prefix),
-    .pit_in_len(pit_in_len),
-    .fib_out_bit(fib_out_bit),
-    .start_send_to_pit(start_send_to_pit),
+    .pit_in_metadata(pit_in_metadata),
     .rejected(rejected),
 
-    .data_in_len(data_in_len),
-    .data_in_prefix(data_in_prefix),
-    .data_ready(data_ready),
-    .data_in(data_in),
+    .fib_out_bit(fib_out_bit),
+    .start_send_to_pit(start_send_to_pit),
+    .data_PIT_to_FIB(data_PIT_to_FIB),
+
+    .RX_valid(RX_valid),
+    .data_SPI_to_FIB(data_SPI_to_FIB),
 
     .clk(clk),
     .rst(rst),
 
-    .pit_out_len(pit_out_len),
     .pit_out_prefix(pit_out_prefix),
     .prefix_ready(prefix_ready),
-    .out_data(out_data),
+    .pit_out_metadata(pit_out_metadata),
 
-    .longest_matching_prefix(longest_matching_prefix),
-    .longest_matching_prefix_len(longest_matching_prefix_len),
-    .ready_for_data(ready_for_data),
-    .clk_out(clk_out)
+    .data_FIB_to_PIT(data_FIB_to_PIT),
+
+    .FIB_to_SPI_data_flag(FIB_to_SPI_data_flag),
+    .data_FIB_to_SPI(data_FIB_to_SPI)
 );
 
 parameter HIGH = 1'b1;
@@ -68,14 +62,13 @@ initial begin
 	// Reset and set all values to 0
 	rst = HIGH;
     pit_in_prefix = LOW;
-    pit_in_len = LOW;
+    pit_in_metadata = LOW;
+    rejected = LOW;
     fib_out_bit = LOW;
     start_send_to_pit = LOW;
-    rejected = LOW;
-    data_in_len = LOW;
-    data_in_prefix = LOW;
-    data_ready = LOW;
-    data_in = LOW;
+    data_PIT_to_FIB = LOW;
+    RX_valid = LOW;
+    data_SPI_to_FIB = LOW;
 
     start_outgoing_packet_simulation = LOW;
     start_incoming_packet_simulation = LOW;
