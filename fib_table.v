@@ -33,7 +33,7 @@ module fib_table(
     output reg [7:0] data_FIB_to_PIT,
 
     // FIB --> SPI
-    output reg FIB_to_SPI_data_flag,
+    output reg FIB_to_SPI_data_flag, //TX
     output reg [7:0] data_FIB_to_SPI
 );
 
@@ -281,7 +281,7 @@ reg [4:0] pit_input_byte_counter;
 // Counter used to keep track of what byte we have sent to SPI from FIB for data packet contents
 reg [4:0] fib_to_spi_data_count;
 
-always@(fib_out_bit, outgoing_state, start_send_to_pit, total_prefix_count, pit_input_byte_counter, fib_to_spi_data_count) begin
+always@(fib_out_bit, length_of_prefix, outgoing_state, start_send_to_pit, total_prefix_count, pit_input_byte_counter, fib_to_spi_data_count, longest_matching_prefix_count) begin
 
     // Default values for no latch
     hashtable_value <= 0;
@@ -293,7 +293,7 @@ always@(fib_out_bit, outgoing_state, start_send_to_pit, total_prefix_count, pit_
         wait_state: begin
             // If fib out is high but not start to send, we know we that we have data from the user
             if (fib_out_bit && !start_send_to_pit) begin
-                outgoing_next_state <= check_for_valid_prefix;
+                outgoing_next_state <= get_hash;
             end
             else if(fib_out_bit && start_send_to_pit) begin
                 // Data packet incoming! Read data incoming from the PIT
@@ -306,6 +306,7 @@ always@(fib_out_bit, outgoing_state, start_send_to_pit, total_prefix_count, pit_
         get_hash: begin
             // Set hash input
             hash_prefix_out <= prefix;
+            outgoing_next_state <= check_for_valid_prefix;
         end
         check_for_valid_prefix: begin
             hashtable_value <= hashTable[length_of_prefix][saved_hash_out];
@@ -379,17 +380,18 @@ end
 
 always @(posedge clk, posedge rst) begin
 	if (rst) begin
-		outgoing_state <= 0;
-        prefix <= 0;
-        metadata <= 0;
-        saved_hash_out <= 0;
-        total_prefix <= 0;
-        total_prefix_count <= 0;
-        longest_matching_prefix_count <= 0;
-        data_packet <= 0;
-        data_to_send <= 0;
-        pit_input_byte_counter <= 0;
-        fib_to_spi_data_count <= 0;
+		outgoing_state <= LOW;
+        prefix <= LOW;
+        metadata <= LOW;
+        saved_hash_out <= LOW;
+        total_prefix <= LOW;
+        total_prefix_count <= LOW;
+        longest_matching_prefix_count <= LOW;
+        data_packet <= LOW;
+        data_to_send <= LOW;
+        pit_input_byte_counter <= LOW;
+        fib_to_spi_data_count <= LOW;
+        FIB_to_SPI_data_flag <= LOW;
     end
     else begin
         case (outgoing_state)
@@ -425,14 +427,17 @@ always @(posedge clk, posedge rst) begin
                     // Set the current bit to 0 (to decrement it) and decrement our length
                     prefix[length_of_prefix] <= 0;
                     length_of_prefix <= length_of_prefix - 1;
+                    outgoing_state <= outgoing_next_state;
                 end
                 else begin
                     // Otherwise we have the correct values and we need to send them to spi to send out, let SPI know we are sending data next cycle
-                    FIB_to_SPI_data_flag <= 1;
+                    FIB_to_SPI_data_flag <= HIGH;
                     outgoing_state <= outgoing_next_state;
                 end
             end
             send_meta_data_to_spi: begin
+                // Set flag back to 0
+                FIB_to_SPI_data_flag <= LOW;
                 data_FIB_to_SPI <= metadata;
                 outgoing_state <= outgoing_next_state;
             end
@@ -451,6 +456,13 @@ always @(posedge clk, posedge rst) begin
                 longest_matching_prefix_count <= longest_matching_prefix_count - 1;
             end
             receive_data_from_PIT: begin
+
+                // Need to set the flag high for the SPI to know we are sending data next cycle
+                if (pit_input_byte_counter == 0) begin
+                    FIB_to_SPI_data_flag <= HIGH;
+                end
+
+                // Let the sending mechanism know we are sending a data packet
                 data_packet <= HIGH;
                 data_to_send <= (data_to_send << 8) + data_PIT_to_FIB;
                 outgoing_state <= outgoing_next_state;

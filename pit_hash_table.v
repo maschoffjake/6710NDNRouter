@@ -14,6 +14,7 @@ output reg pit_in_bit;
 output reg rejected;
 output reg interest_packet; // Added
 
+
 reg [11:0] cache [1023:0]; //Hash table with 1024 entries
 reg [9:0] current_address;
 reg [4:0] state;

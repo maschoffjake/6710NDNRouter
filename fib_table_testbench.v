@@ -114,7 +114,7 @@ end
 
 reg [10:0] bytes_sent_data_packet;
 reg [1:0] state_data_packet_incoming;
-// Used for simulating data coming from SPI to FIB (interest packet!)
+// Used for simulating data coming from SPI to FIB (interest packet!) TODO check for rejection with a test
 always@(posedge clk) begin
     case (state_data_packet_incoming)
         // Wait State
@@ -150,17 +150,58 @@ always@(posedge clk) begin
     case (state_interest_packet_outgoing)
         // Wait State
         0: begin
+            state_interest_packet_outgoing <= 0;
             if (start_outgoing_interest_packet) begin
+                state_interest_packet_outgoing <= 1;
                 fib_out_bit <= HIGH;
                 pit_in_prefix <= prefix_input_from_pit;
                 pit_in_metadata <= metadata_input_from_pit;
             end
+        end
+        1: begin
             fib_out_bit <= LOW;
             pit_in_prefix <= LOW;
-            pit_in_metadata <= LOW;
+            pit_in_metadata <= LOW; 
         end
         default: begin
             state_interest_packet_outgoing <= 0;
+        end 
+    endcase
+end
+
+reg [1:0] state_data_packet_outgoing;
+reg [10:0] bytes_sent_from_pit;
+// Used for simulating data coming from PIT to FIB (data packet!)
+always@(posedge clk) begin
+    case (state_data_packet_outgoing)
+        // Wait State
+        0: begin
+            bytes_sent_from_pit <= 0;
+            if (start_outgoing_data_packet) begin
+                fib_out_bit <= HIGH;
+                start_send_to_pit <= HIGH;
+                pit_in_prefix <= prefix_input_from_pit;
+                pit_in_metadata <= metadata_input_from_pit;
+
+                // Act like sending data from the PIT
+                state_data_packet_outgoing <= 1;
+            end
+        end
+        1: begin
+            fib_out_bit <= LOW;
+            start_send_to_pit <= LOW;
+            if (bytes_sent_from_pit == 255) begin
+                state_data_packet_outgoing <= 0;
+            end
+            else begin
+                data_PIT_to_FIB <= data_value[255:248];
+                data_value <= data_value << 8;
+                state_data_packet_outgoing <= 1;
+                bytes_sent_from_pit <= bytes_sent_from_pit + 1;
+            end
+        end
+        default: begin
+            state_data_packet_outgoing <= 0;
         end 
     endcase
 end
@@ -206,12 +247,22 @@ initial begin
     #1000;
 
     // Testing outgoing logic (interest packet) with no cache hit!
-    state_data_packet_incoming = 0;
+    state_interest_packet_outgoing = 0;
     prefix_input_from_pit = 64'h0000FFFF0000FFF0;
     metadata_input_from_pit = 8'd112;
     start_outgoing_interest_packet = HIGH;
     #20;
     start_outgoing_interest_packet = LOW;
+    #3000;
+
+    // Testing outgoing logic (data packet) with no cache hit!
+    state_data_packet_outgoing = 0;
+    prefix_input_from_pit = 64'h0000FF0F0000FFF0;
+    metadata_input_from_pit = 8'd48;
+    data_value = "here is fake data";
+    start_outgoing_data_packet = HIGH;
+    #20;
+    start_outgoing_data_packet = LOW;
     #1000;
 end
 
