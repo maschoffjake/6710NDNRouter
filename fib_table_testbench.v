@@ -186,11 +186,6 @@ always@(posedge clk) begin
                 // Act like sending data from the PIT
                 state_data_packet_outgoing <= 1;
             end
-            else begin
-                fib_out_bit <= LOW;
-                pit_in_prefix <= LOW;
-                pit_in_metadata <= LOW; 
-            end
         end
         1: begin
             fib_out_bit <= LOW;
