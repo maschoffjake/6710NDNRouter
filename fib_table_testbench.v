@@ -1,34 +1,34 @@
 module fib_table_testbench ();
 
 // PIT HASH TABLE --> FIB
-reg [63:0] pit_in_prefix,
-reg [7:0] pit_in_metadata,
-reg rejected,
+reg [63:0] pit_in_prefix;
+reg [7:0] pit_in_metadata;
+reg rejected;
 
 // PIT --> FIB
-reg fib_out_bit,
-reg start_send_to_pit,
-reg [7:0] data_PIT_to_FIB,
+reg fib_out_bit;
+reg start_send_to_pit;
+reg [7:0] data_PIT_to_FIB;
 
 // SPI --> FIB
-reg RX_valid,
-reg [7:0] data_SPI_to_FIB,
+reg RX_valid;
+reg [7:0] data_SPI_to_FIB;
 
 // OVERALL INPUTS 
-reg clk,
-reg rst,
+reg clk;
+reg rst;
 
 // FIB --> PIT HASH TABLE
-wire [63:0] pit_out_prefix,
-wire prefix_ready,
-wire [7:0] pit_out_metadata,
+wire [63:0] pit_out_prefix;
+wire prefix_ready;
+wire [7:0] pit_out_metadata;
 
 // FIB --> PIT
-wire [7:0] data_FIB_to_PIT,
+wire [7:0] data_FIB_to_PIT;
 
 // FIB --> SPI
-wire FIB_to_SPI_data_flag,
-wire [7:0] data_FIB_to_SPI
+wire FIB_to_SPI_data_flag;
+wire [7:0] data_FIB_to_SPI;
 
 fib DUT (
     .pit_in_prefix(pit_in_prefix),
