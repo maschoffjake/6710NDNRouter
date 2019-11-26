@@ -116,13 +116,13 @@ always@(posedge clk) begin
             if (start_incoming_interest_packet) begin
                 RX_valid <= HIGH;
                 state <= 1;
-                bytes_sent <= 0;
             end
+            bytes_sent <= 0;
         end
         // Send data
         1: begin
             RX_valid <= LOW;
-            if (bytes_sent <= 8) begin
+            if (bytes_sent == 8) begin
                 state <= 0;
             end
             else begin
