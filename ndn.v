@@ -11,11 +11,11 @@ module ndn(
     input miso_from_interface,
     output mosi_to_interface,
     output cs_to_interface,
-    input [7:0] out_data,     // input [7:0] 
-    input [9:0] address,      // input [9:0] 
-    input [9:0] current_byte, // input [9:0]
-    input write_enable, // input 
-    output [7:0] read_data     // output [7:0] 
+    output [7:0] out_data,     // input [7:0] 
+    output [9:0] address,      // input [9:0] 
+    output [9:0] current_byte, // input [9:0]
+    output write_enable, // input 
+    input [7:0] read_data     // output [7:0] 
 );
 
 wire pit_in_bit;            // PITHASH --> PIT
