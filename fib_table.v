@@ -281,7 +281,7 @@ reg [4:0] pit_input_byte_counter;
 // Counter used to keep track of what byte we have sent to SPI from FIB for data packet contents
 reg [4:0] fib_to_spi_data_count;
 
-always@(fib_out_bit, outgoing_state, start_send_to_pit, total_prefix_count, pit_input_byte_counter, fib_to_spi_data_count) begin
+always@(fib_out_bit, length_of_prefix, outgoing_state, start_send_to_pit, total_prefix_count, pit_input_byte_counter, fib_to_spi_data_count) begin
 
     // Default values for no latch
     hashtable_value <= 0;
@@ -289,7 +289,7 @@ always@(fib_out_bit, outgoing_state, start_send_to_pit, total_prefix_count, pit_
     hash_prefix_out <= 0;
 
 
-    case (outgoing_state, length_of_prefix)
+    case (outgoing_state)
         wait_state: begin
             // If fib out is high but not start to send, we know we that we have data from the user
             if (fib_out_bit && !start_send_to_pit) begin
