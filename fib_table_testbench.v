@@ -253,7 +253,7 @@ initial begin
     start_outgoing_interest_packet = HIGH;
     #20;
     start_outgoing_interest_packet = LOW;
-    #2000;
+    #3000;
 
     // Testing outgoing logic (data packet) with no cache hit!
     state_data_packet_outgoing = 0;
