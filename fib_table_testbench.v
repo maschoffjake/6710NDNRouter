@@ -30,7 +30,7 @@ wire [7:0] data_FIB_to_PIT;
 wire FIB_to_SPI_data_flag;
 wire [7:0] data_FIB_to_SPI;
 
-fib DUT (
+fib_table DUT (
     .pit_in_prefix(pit_in_prefix),
     .pit_in_metadata(pit_in_metadata),
     .rejected(rejected),
