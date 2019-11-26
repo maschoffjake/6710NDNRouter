@@ -121,6 +121,7 @@ always@(posedge clk) begin
         end
         // Send data
         1: begin
+            RX_valid <= HIGH;
             if (bytes_sent <= 8) begin
                 state <= 0;
             end
