@@ -6,15 +6,17 @@
 
 module fib_table(
 
-    // PIT INPUTS
+    // PIT HASH TABLE --> FIB
     input [63:0] pit_in_prefix,
     input [7:0] pit_in_metadata,
+    input rejected,
+
+    // PIT --> FIB
     input fib_out_bit,
     input start_send_to_pit,
-    input rejected,
     input [7:0] data_PIT_to_FIB,
 
-    // DATA INPUTS
+    // SPI --> FIB
     input RX_valid,
     input [7:0] data_SPI_to_FIB,
 
@@ -22,16 +24,15 @@ module fib_table(
     input clk,
     input rst,
 
-    // PIT OUTPUTS
-    //output reg [5:0] pit_out_len,
+    // FIB --> PIT HASH TABLE
     output reg [63:0] pit_out_prefix,
     output reg prefix_ready,
     output reg [7:0] pit_out_metadata,
 
-    // PIT DATA OUTPUT
+    // FIB --> PIT
     output reg [7:0] data_FIB_to_PIT,
 
-    // DATA OUTPUTS
+    // FIB --> SPI
     output reg FIB_to_SPI_data_flag,
     output reg [7:0] data_FIB_to_SPI
 );
