@@ -99,6 +99,9 @@ initial begin
     #20;
     start_incoming_interest_packet = LOW;
     #1000;
+    data_value = "this is an example";
+    prefix_value = 64'h0000FFFF0000FFFF;
+    metadata_value = 8'd48;
 end
 
 initial begin
