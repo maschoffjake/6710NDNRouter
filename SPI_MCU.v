@@ -41,11 +41,11 @@ module spi_mcu(
     output reg [7:0]        output_shift_register,  // Used to send data to the FIB 
 
 
-	input reg [7:0] 	PIT_to_SPI_data,
-	input reg [63:0] 	PIT_to_SPI_prefix,
-	output reg 			SPI_to_PIT_bit,
-	output reg [5:0]    SPI_to_PIT_length,
-	output reg [63:0]   SPI_to_PIT_prefix
+	input [7:0] 	PIT_to_SPI_data,
+	input [63:0] 	PIT_to_SPI_prefix,
+	output reg 		SPI_to_PIT_bit,
+	output reg [5:0]    	SPI_to_PIT_length,
+	output reg [63:0]   	SPI_to_PIT_prefix
 );
 
 
