@@ -281,7 +281,7 @@ reg [4:0] pit_input_byte_counter;
 // Counter used to keep track of what byte we have sent to SPI from FIB for data packet contents
 reg [4:0] fib_to_spi_data_count;
 
-always@(fib_out_bit, outgoing_state, start_send_to_pit, total_prefix_count, pit_input_byte_counter, fib_to_spi_data_count) begin
+always@(fib_out_bit, length_of_prefix, outgoing_state, start_send_to_pit, total_prefix_count, pit_input_byte_counter, fib_to_spi_data_count) begin
 
     // Default values for no latch
     hashtable_value <= 0;
@@ -293,7 +293,7 @@ always@(fib_out_bit, outgoing_state, start_send_to_pit, total_prefix_count, pit_
         wait_state: begin
             // If fib out is high but not start to send, we know we that we have data from the user
             if (fib_out_bit && !start_send_to_pit) begin
-                outgoing_next_state <= check_for_valid_prefix;
+                outgoing_next_state <= get_hash;
             end
             else if(fib_out_bit && start_send_to_pit) begin
                 // Data packet incoming! Read data incoming from the PIT
@@ -306,6 +306,7 @@ always@(fib_out_bit, outgoing_state, start_send_to_pit, total_prefix_count, pit_
         get_hash: begin
             // Set hash input
             hash_prefix_out <= prefix;
+            outgoing_next_state <= check_for_valid_prefix;
         end
         check_for_valid_prefix: begin
             hashtable_value <= hashTable[length_of_prefix][saved_hash_out];
@@ -425,6 +426,7 @@ always @(posedge clk, posedge rst) begin
                     // Set the current bit to 0 (to decrement it) and decrement our length
                     prefix[length_of_prefix] <= 0;
                     length_of_prefix <= length_of_prefix - 1;
+                    outgoing_state <= outgoing_next_state;
                 end
                 else begin
                     // Otherwise we have the correct values and we need to send them to spi to send out, let SPI know we are sending data next cycle

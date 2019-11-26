@@ -155,9 +155,11 @@ always@(posedge clk) begin
                 pit_in_prefix <= prefix_input_from_pit;
                 pit_in_metadata <= metadata_input_from_pit;
             end
-            fib_out_bit <= LOW;
-            pit_in_prefix <= LOW;
-            pit_in_metadata <= LOW;
+            else begin
+                fib_out_bit <= LOW;
+                pit_in_prefix <= LOW;
+                pit_in_metadata <= LOW; 
+            end
         end
         default: begin
             state_interest_packet_outgoing <= 0;
@@ -206,7 +208,7 @@ initial begin
     #1000;
 
     // Testing outgoing logic (interest packet) with no cache hit!
-    state_data_packet_incoming = 0;
+    state_interest_packet_outgoing = 0;
     prefix_input_from_pit = 64'h0000FFFF0000FFF0;
     metadata_input_from_pit = 8'd112;
     start_outgoing_interest_packet = HIGH;

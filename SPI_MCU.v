@@ -211,7 +211,7 @@ always@(posedge clk, posedge rst)
                     transmitting_state <= idle;
                 end
                 miso <= SPI_to_USER_data[255];
-				SPI_to_USER_data = SPI_to_USER_data << 1;
+				SPI_to_USER_data <= SPI_to_USER_data << 1;
                 data_input_count <= data_input_count - 1;
             end
 			default: begin
