@@ -153,7 +153,7 @@ always@(posedge clk) begin
             if (start_incoming_interest_packet) begin
                 fib_out_bit <= HIGH;
                 pit_in_prefix <= prefix_input_from_pit;
-                pit_in_metadata <= metadata_input_from_pit
+                pit_in_metadata <= metadata_input_from_pit;
             end
             fib_out_bit <= LOW;
             pit_in_prefix <= LOW;
