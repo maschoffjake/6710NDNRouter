@@ -1,9 +1,9 @@
-module PIT(table_entry, address, current_byte, in_data, read_data, out_data, write_enable, in_bit, out_bit, data_packet, start_bit, fib_out, clk, reset);
+module PIT(table_entry, address, current_byte, in_data, read_data, out_data, write_enable, in_bit, out_bit, interest_packet, start_bit, fib_out, clk, reset);
 
 // I changed this to 11 bits b/c pit never checks requested bit
 input [10:0] table_entry; // it's easier to just pass the whole table entry instead of concatenating it
 input [7:0] in_data, read_data;
-input in_bit, out_bit, data_packet, clk, reset;
+input in_bit, out_bit, interest_packet, clk, reset;
 
 output reg [9:0] address;
 output reg [9:0] current_byte;
@@ -62,7 +62,7 @@ begin
 		pit_address <= table_entry[9:0];
 		current_byte <= 0;
 		start_bit <= 1;
-		if(data_packet) begin // If FIB sent an interest packet and the PIT has that packet, set fib_out and start_bit high to notify it has the data
+		if(interest_packet) begin // If FIB sent an interest packet and the PIT has that packet, set fib_out and start_bit high to notify it has the data
 			state <= MEMORY_OUT; // otherwise just the start bit is high and the FIB will know it doesn't have the data
 			fib_out <= 1;
 		end 
@@ -109,6 +109,7 @@ begin
 		fib_out <= 0;
 		memory_count <= 0;
 		current_byte <= 0;
+		start_bit <= 0;
 		state <= IDLE;
 	end
 	default:

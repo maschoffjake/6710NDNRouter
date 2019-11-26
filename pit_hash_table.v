@@ -1,4 +1,4 @@
-module pit_hash_table(prefix, pit_out_prefix, pit_out_metadata, length, prefix_ready, out_bit, clk, rst, table_entry, meta_data, pit_in_bit, rejected, data_packet);
+module pit_hash_table(prefix, pit_out_prefix, pit_out_metadata, length, prefix_ready, out_bit, clk, rst, table_entry, meta_data, pit_in_bit, rejected, interest_packet);
 input [63:0] prefix;
 input [63:0] pit_out_prefix;
 input [7:0] pit_out_metadata;
@@ -12,7 +12,7 @@ output reg [10:0] table_entry;
 output reg [7:0] meta_data; // Added
 output reg pit_in_bit;
 output reg rejected;
-output reg data_packet; // Added
+output reg interest_packet; // Added
 
 reg [11:0] cache [1023:0]; //Hash table with 1024 entries
 reg [9:0] current_address;
@@ -38,7 +38,7 @@ always @(state, out_bit, prefix_ready) begin
 			pit_in_bit = 0;
 			table_entry = 0;
 			meta_data = 0;
-			data_packet = 0;
+			interest_packet = 0;
 			for(ii = 0; ii < 1024; ii=ii+1)
 				cache[ii] = 0;
 		end
@@ -47,7 +47,7 @@ always @(state, out_bit, prefix_ready) begin
 			if(prefix_ready || out_bit) begin
 				table_entry = 0;
 				pit_in_bit = 0;
-				data_packet = 0;
+				interest_packet = 0;
 				// Set values based on who raised flag
 				if(out_bit) begin
 					meta_data = {2'b01, length};
@@ -66,7 +66,7 @@ always @(state, out_bit, prefix_ready) begin
 			if(cache[hash][11]) begin
 				if(prefix_ready) begin
 					if(meta_data[6] && cache[hash][10]) begin
-						data_packet = 1;
+						interest_packet = 1;
 					end
 					cache[hash][10] = 1;
 				end
