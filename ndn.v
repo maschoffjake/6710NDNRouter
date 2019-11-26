@@ -69,6 +69,7 @@ PIT pit_module (
     .out_data       (out_data),          // output [7:0]
     .write_enable   (write_enable),      // output
     .start_bit      (start_send_to_pit), // output
+    .PIT_to_SPI_bit (PIT_to_SPI_bit), 	 //output
     .fib_out        (fib_out_bit)        // output
 );
 
@@ -108,6 +109,7 @@ spi_mcu spi_mcu_module(
     .clk(clk), //Input
     .rst(rst), //Input
     .output_shift_register(data_fib_to_pit), //Output[7:0]
+    .PIT_to_SPI_bit(PIT_to_SPI_bit), //Input
     .PIT_to_SPI_data(out_data), //Input[7:0]
     .PIT_to_SPI_prefix(SPI_to_PIT_prefix), //input[63:0]
     .SPI_to_PIT_bit(pit_in_bit), //Output

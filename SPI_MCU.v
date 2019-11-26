@@ -43,6 +43,7 @@ module spi_mcu(
 
 	input [7:0] 	PIT_to_SPI_data,
 	input [63:0] 	PIT_to_SPI_prefix,
+	input		PIT_to_SPI_bit,
 	output reg 		SPI_to_PIT_bit,
 	output reg [5:0]    	SPI_to_PIT_length,
 	output reg [63:0]   	SPI_to_PIT_prefix

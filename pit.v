@@ -1,4 +1,4 @@
-module PIT(table_entry, address, current_byte, in_data, read_data, out_data, write_enable, in_bit, out_bit, interest_packet, start_bit, fib_out, clk, reset);
+module PIT(table_entry, address, current_byte, in_data, read_data, out_data, write_enable, in_bit, out_bit, interest_packet, start_bit, PIT_to_SPI_bit, fib_out, clk, reset);
 
 // I changed this to 11 bits b/c pit never checks requested bit
 input [10:0] table_entry; // it's easier to just pass the whole table entry instead of concatenating it
@@ -9,6 +9,7 @@ output reg [9:0] address;
 output reg [9:0] current_byte;
 output reg [7:0] out_data;
 output reg start_bit, write_enable, fib_out;
+output reg PIT_to_SPI_bit;
 
 reg [2:0] state;
 reg [9:0] pit_address;
@@ -31,6 +32,11 @@ begin
 	case(state)
 	IDLE:
 	begin
+		PIT_to_SPI_bit <= 0;
+		fib_out <= 0;
+		memory_count <= 0;
+		current_byte <= 0;
+		start_bit <= 0;	
 		if(out_bit)
 		begin
 			state <= RECEIVING_PIT;
@@ -97,6 +103,7 @@ begin
 			address <= pit_address;
 			current_byte <= current_byte + 1;
 			memory_count <= memory_count + 1;
+			PIT_to_SPI_bit <= 1;
 		end
 		else
 		begin
@@ -111,6 +118,7 @@ begin
 		current_byte <= 0;
 		start_bit <= 0;
 		state <= IDLE;
+		PIT_to_SPI_bit <= 0;
 	end
 	default:
 	begin
