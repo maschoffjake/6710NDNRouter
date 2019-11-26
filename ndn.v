@@ -41,7 +41,7 @@ wire write_enable;          // PIT --> RAM
 wire start_send_to_pit;     // PIT --> FIB
 wire fib_out_bit;           // PIT --> FIB
 wire [63:0] FIB_to_PIT_prefix; // FIB --> PIT
-wire interest_packet        // PITHASH --> PIT
+wire interest_packet;        // PITHASH --> PIT
 //wire [5:0] pit_out_len;     // FIB --> PIT
 
 assign user_data = out_data;
@@ -70,7 +70,7 @@ PIT pit_module (
     .out_bit        (out_bit),           // input
     .clk            (clk),               // input
     .reset          (rst),               // input
-	.interest_packet(interest_packet)    // input
+	.interest_packet(interest_packet),    // input
     .address        (address),           // output [9:0]
     .current_byte   (current_byte),      // output [9:0]
     .out_data       (out_data),          // output [7:0]
