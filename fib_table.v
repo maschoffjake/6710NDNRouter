@@ -289,7 +289,7 @@ always@(fib_out_bit, outgoing_state, start_send_to_pit, total_prefix_count, pit_
     hash_prefix_out <= 0;
 
 
-    case (outgoing_state)
+    case (outgoing_state, length_of_prefix)
         wait_state: begin
             // If fib out is high but not start to send, we know we that we have data from the user
             if (fib_out_bit && !start_send_to_pit) begin
