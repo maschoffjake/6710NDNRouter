@@ -95,34 +95,35 @@ always@(posedge clk, posedge rst) begin
 				SPI_to_PIT_bit <= 0;
                 SPI_to_PIT_length <= 0;
                 SPI_to_PIT_prefix <= 0;
+				prefix_count <= 63;
                 length_data_count <= 5;
                 prefix_byte_count <= 7;
 
                 // Wait for miso to go low (start bit)
-                if (!miso) begin
+                if (!mosi) begin
                     receiving_state <= receiving_packet_length;
                 end
             end 
             receiving_packet_length: begin
                 // First bit of a packet is a filler bit, so grab second. If it's high, interest packet!
 				if (length_data_count > 0) begin
-                    SPI_to_PIT_length[length_data_count] <= miso;
+                    SPI_to_PIT_length[length_data_count] <= mosi;
 					length_data_count <= length_data_count - 1;
                 end
                 // Once all meta data has been received, time to receive packet prefix!
                 else if (length_data_count == 0) begin
-                    SPI_to_PIT_length[length_data_count] <= miso;
+                    SPI_to_PIT_length[length_data_count] <= mosi;
                     receiving_state <= receiving_packet_prefix;
                 end
             end
             receiving_packet_prefix: begin
                 // Time to move states 
 				if(prefix_count > 0) begin
-				   	SPI_to_PIT_prefix[prefix_count] <= miso;
+				   	SPI_to_PIT_prefix[prefix_count] <= mosi;
                     prefix_count <= prefix_count - 1; 
 				end
                 else if (prefix_count == 0) begin
-			       SPI_to_PIT_prefix[prefix_count] <= miso; 
+			       SPI_to_PIT_prefix[prefix_count] <= mosi; 
                    receiving_state <= send_data_to_pithash;  
                 end
 
@@ -170,7 +171,7 @@ always@(posedge clk, posedge rst)
 				prefix_input_count <= 63;
                 transferring_data_packet <= LOW; // Default to low
 
-                if (SPI_to_PIT_bit) begin
+                if (PIT_to_SPI_bit) begin
                     // Send start bit to start transfer and change states
                     transmitting_state <= packet_data_state;
                 end
