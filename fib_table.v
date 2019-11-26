@@ -426,6 +426,7 @@ always @(posedge clk, posedge rst) begin
                     // Set the current bit to 0 (to decrement it) and decrement our length
                     prefix[length_of_prefix] <= 0;
                     length_of_prefix <= length_of_prefix - 1;
+                    outgoing_state <= outgoing_next_state;
                 end
                 else begin
                     // Otherwise we have the correct values and we need to send them to spi to send out, let SPI know we are sending data next cycle
