@@ -118,7 +118,7 @@ spi_mcu spi_mcu_module(
     .PIT_to_SPI_bit(PIT_to_SPI_bit), //Input
     .PIT_to_SPI_data(out_data), //Input[7:0]
     .PIT_to_SPI_prefix(FIB_to_PIT_prefix), //input[63:0]
-    .SPI_to_PIT_bit(interest_packet), //Output
+    .SPI_to_PIT_bit(out_bit), //Output
     .SPI_to_PIT_length(len), //Output[5:0]
     .SPI_to_PIT_prefix(SPI_to_PIT_prefix) //Output[63:0]
 );
