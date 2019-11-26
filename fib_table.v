@@ -41,7 +41,7 @@ localparam HIGH = 1, LOW = 0;
     Create a 2D array where there are 64 entries (1 for each possible length of the prefix),
     where there are 1024 entries in the array. Each of these entries store a valid bit of 1
 */
-reg [1023:0] hashTable[63:0];
+reg [63:0] hashTable[63:0];
 
 /*
     Create a hashing unit in order to hash items. Creating its own hashing unit so we don't 
@@ -49,8 +49,8 @@ reg [1023:0] hashTable[63:0];
     hashing modules, one for incoming and one for outgoing.
 */
 reg [63:0] hash_prefix_in;
-reg [9:0] saved_hash_in;
-wire [9:0] hash_value_in;
+reg [5:0] saved_hash_in;
+wire [5:0] hash_value_in;
 hash HASH_INCOMING(hash_prefix_in, hash_value_in, clk, rst);
 
 
@@ -245,8 +245,8 @@ end
 // OUTGOING PACKET LOGIC (only deals with interest packets being sent out from the user, since data packets are 
 // handled by incoming state machine)
 reg [63:0] hash_prefix_out;
-reg [9:0] saved_hash_out;
-wire [9:0] hash_value_out;
+reg [5:0] saved_hash_out;
+wire [5:0] hash_value_out;
 hash HASH_OUTGOING(hash_prefix_out, hash_value_out, clk, rst);
 
 // Transmit longest matching prefix, total prefix, and meta data once longest prefix is found
