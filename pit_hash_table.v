@@ -1,7 +1,7 @@
-module pit_hash_table(prefix, pit_out_prefix, pit_out_metadata, length, prefix_ready, out_bit, clk, rst, table_entry, meta_data, pit_in_bit, rejected, interest_packet);
-input [63:0] prefix;
-input [63:0] pit_out_prefix;
-input [7:0] pit_out_metadata;
+module pit_hash_table(SPI_to_PIT_prefix, FIB_to_PIT_prefix, FIB_to_PIT_metadata, length, prefix_ready, out_bit, clk, rst, table_entry, meta_data, pit_in_bit, rejected, interest_packet);
+input [63:0] SPI_to_PIT_prefix;
+input [63:0] FIB_to_PIT_prefix;
+input [7:0] FIB_to_PIT_metadata;
 input [5:0] length; // Added
 input prefix_ready;
 input out_bit;
@@ -51,12 +51,12 @@ always @(state, out_bit, prefix_ready) begin
 				// Set values based on who raised flag
 				if(out_bit) begin
 					meta_data = {2'b01, length};
-					pre_hash = prefix;
+					pre_hash = SPI_to_PIT_prefix;
 					next_state = get_hash;
 				end
 				if(prefix_ready) begin
-					meta_data = pit_out_metadata;
-					pre_hash = pit_out_prefix;
+					meta_data = FIB_to_PIT_metadata;
+					pre_hash = FIB_to_PIT_prefix;
 					next_state = get_hash;
 				end
 			end

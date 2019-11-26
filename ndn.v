@@ -5,7 +5,7 @@ module ndn(
     input rst,
 
     // Incoming inputs
-    input [63:0] prefix,
+    input [63:0] SPI_to_PIT_prefix,
     input [5:0] len,
     input out_bit,
 
@@ -35,29 +35,31 @@ wire [9:0] current_byte;    // PIT --> RAM
 wire [7:0] read_data;       // RAM --> PIT
 wire [7:0] out_data;        // PIT --> RAM/USER
 wire [7:0] data_fib_to_pit;
-wire [7:0] pit_out_metadata;// FIB --> PITHASH
+wire [7:0] FIB_to_PIT_metadata;// FIB --> PITHASH
 wire [7:0] metadata;		// PITHASH --> FIB
 wire write_enable;          // PIT --> RAM
 wire start_send_to_pit;     // PIT --> FIB
 wire fib_out_bit;           // PIT --> FIB
-wire [63:0] pit_out_prefix; // FIB --> PIT
+wire [63:0] FIB_to_PIT_prefix; // FIB --> PIT
+wire interest_packet        // PITHASH --> PIT
 //wire [5:0] pit_out_len;     // FIB --> PIT
 
 assign user_data = out_data;
 
 pit_hash_table pit_hash_table_module (
-    .prefix         (prefix),         // input [63:0]
-    .prefix_ready   (prefix_ready),   // input
-    .pit_out_prefix (pit_out_prefix), // input [63:0]
-    .length    		(len),    		  // input [5:0]
-	.pit_out_metadata(pit_out_metadata),// input [7:0]
-    .out_bit        (out_bit),        // input
-    .clk            (clk),            // input
-    .rst            (rst),            // input
-    .table_entry    (table_entry),    // output [11:0]
-	.metadata       (metadata),        // output [7:0]
-    .pit_in_bit     (pit_in_bit),     // output
-    .rejected       (rejected)        // output
+    .SPI_to_PIT_prefix         	(SPI_to_PIT_prefix),         // input [63:0]
+    .prefix_ready   			(prefix_ready),   // input
+    .FIB_to_PIT_prefix 			(FIB_to_PIT_prefix), // input [63:0]
+    .length    					(len),    		  // input [5:0]
+	.FIB_to_PIT_metadata		(FIB_to_PIT_metadata),// input [7:0]
+    .out_bit        			(out_bit),        // input
+    .clk           			 	(clk),            // input
+    .rst            			(rst),            // input
+    .table_entry    			(table_entry),    // output [11:0]
+	.metadata       			(metadata),        // output [7:0]
+    .pit_in_bit     			(pit_in_bit),     // output
+    .rejected       			(rejected),        // output
+	.interest_packet			(interest_packet)
 );
 
 PIT pit_module (
@@ -68,6 +70,7 @@ PIT pit_module (
     .out_bit        (out_bit),           // input
     .clk            (clk),               // input
     .reset          (rst),               // input
+	.interest_packet(interest_packet)    // input
     .address        (address),           // output [9:0]
     .current_byte   (current_byte),      // output [9:0]
     .out_data       (out_data),          // output [7:0]
@@ -77,7 +80,7 @@ PIT pit_module (
 );
 
 fib_table fib_module (
-    .pit_in_prefix                  (prefix), 			   // input [63:0] 
+    .pit_in_prefix                  (SPI_to_PIT_prefix), 			   // input [63:0] 
     .pit_in_len                     (len), 			   // input [5:0] 
     .fib_out_bit                    (fib_out_bit), 		   // input 
     .start_send_to_pit              (start_send_to_pit), 	   // input 
@@ -89,7 +92,7 @@ fib_table fib_module (
     .clk                            (clk), 			   // input 
     .rst                            (rst), 			   // input 
     //.pit_out_len                    (pit_out_len), 		   // output [5:0]
-    .pit_out_prefix                 (pit_out_prefix), 		   // output [63:0] 
+    .pit_out_prefix                 (FIB_to_PIT_prefix), 		   // output [63:0] 
     .prefix_ready                   (prefix_ready), 		   // output 
     .out_data                       (data_fib_to_pit), 		   // output [7:0] 
     .longest_matching_prefix        (longest_matching_prefix),     // output [63:0] 
