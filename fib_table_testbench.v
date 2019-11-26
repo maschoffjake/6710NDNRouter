@@ -150,16 +150,18 @@ always@(posedge clk) begin
     case (state_interest_packet_outgoing)
         // Wait State
         0: begin
+            state_interest_packet_outgoing <= 0;
             if (start_outgoing_interest_packet) begin
+                state_interest_packet_outgoing <= 1;
                 fib_out_bit <= HIGH;
                 pit_in_prefix <= prefix_input_from_pit;
                 pit_in_metadata <= metadata_input_from_pit;
             end
-            else begin
-                fib_out_bit <= LOW;
-                pit_in_prefix <= LOW;
-                pit_in_metadata <= LOW; 
-            end
+        end
+        1: begin
+            fib_out_bit <= LOW;
+            pit_in_prefix <= LOW;
+            pit_in_metadata <= LOW; 
         end
         default: begin
             state_interest_packet_outgoing <= 0;
@@ -175,7 +177,7 @@ always@(posedge clk) begin
         // Wait State
         0: begin
             bytes_sent_from_pit <= 0;
-            if (start_outgoing_interest_packet) begin
+            if (start_outgoing_data_packet) begin
                 fib_out_bit <= HIGH;
                 start_send_to_pit <= HIGH;
                 pit_in_prefix <= prefix_input_from_pit;
@@ -183,11 +185,6 @@ always@(posedge clk) begin
 
                 // Act like sending data from the PIT
                 state_data_packet_outgoing <= 1;
-            end
-            else begin
-                fib_out_bit <= LOW;
-                pit_in_prefix <= LOW;
-                pit_in_metadata <= LOW; 
             end
         end
         1: begin
@@ -256,7 +253,7 @@ initial begin
     start_outgoing_interest_packet = HIGH;
     #20;
     start_outgoing_interest_packet = LOW;
-    #1000;
+    #2000;
 
     // Testing outgoing logic (data packet) with no cache hit!
     state_data_packet_outgoing = 0;
