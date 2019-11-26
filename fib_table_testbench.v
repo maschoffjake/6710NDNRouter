@@ -71,6 +71,9 @@ reg                 start_outgoing_data_packet;
 
 reg [2:0]           state;
 
+reg [63:0]          prefix_input_from_pit;
+reg [7:0]           metadata_input_from_pit;
+
 
 initial begin
 	// Create clock
@@ -141,6 +144,59 @@ always@(posedge clk) begin
     endcase
 end
 
+reg [10:0] bytes_sent_data_packet;
+reg [1:0] state_data_packet_incoming;
+// Used for simulating data coming from PIT to FIB (interest packet!)
+always@(posedge clk) begin
+    case (state_data_packet_incoming)
+        // Wait State
+        0: begin
+            if (start_incoming_data_packet) begin
+                RX_valid <= HIGH;
+                state_data_packet_incoming <= 1;
+            end
+            bytes_sent_data_packet <= 0;
+        end
+        // Send data
+        1: begin
+            RX_valid <= LOW;
+            if (bytes_sent_data_packet == 327) begin
+                state_data_packet_incoming <= 0;
+            end
+            else begin
+                data_SPI_to_FIB <= data_packet[327:320];
+                data_packet <= data_packet << 8;
+                state_data_packet_incoming <= 1;
+                bytes_sent_data_packet <= bytes_sent_data_packet + 1;
+            end
+        end
+        default: begin
+            state_data_packet_incoming <= 0;
+        end 
+    endcase
+end
+
+reg [1:0] state_interest_packet_outgoing;
+// Used for simulating data coming from PIT to FIB (interest packet!)
+always@(posedge clk) begin
+    case (state_interest_packet_outgoing)
+        // Wait State
+        0: begin
+            if (start_incoming_interest_packet) begin
+                fib_out_bit <= HIGH;
+                pit_in_prefix <= prefix_input_from_pit;
+                pit_in_metadata <= metadata_input_from_pit
+            end
+            fib_out_bit <= LOW;
+            pit_in_prefix <= LOW;
+            pit_in_metadata <= LOW;
+        end
+        default: begin
+            state_interest_packet_outgoing <= 0;
+        end 
+    endcase
+end
+
 initial begin
 	// Reset and set all values to 0
 	rst = HIGH;
@@ -179,6 +235,15 @@ initial begin
     start_incoming_data_packet = HIGH;
     #20;
     start_incoming_data_packet = LOW;
+    #1000;
+
+    // Testing outgoing logic (interest packet) with no cache hit!
+    state_data_packet_incoming = 0;
+    prefix_input_from_pit = 64'h0000FFFF0000FFF0;
+    metadata_input_from_pit = 8'd112;
+    start_outgoing_interest_packet = HIGH;
+    #20;
+    start_outgoing_interest_packet = LOW;
     #1000;
 end
 
