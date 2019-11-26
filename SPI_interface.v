@@ -29,7 +29,6 @@
 module spi_interface(
 
     // SPI interfaces
-    output sclk,
     output reg mosi,
     input miso,
     output cs,
@@ -80,7 +79,6 @@ localparam idle = 0, INTERFACE_to_SPI_meta_state = 1, INTERFACE_to_SPI_prefix_st
     with multiple outgoing interfaces.
 */
 assign cs = LOW;
-assign sclk = clk;
 
 
 /*

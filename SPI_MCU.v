@@ -29,7 +29,6 @@
 
 */
 module spi_mcu(
-    input sclk,
     input mosi,
     output reg miso,
     input cs,
@@ -83,7 +82,6 @@ localparam idle = 0, receiving_packet_length = 1, receiving_packet_prefix = 2, s
     Could easily change this module to allow for more chip selects, so the chip could interface
     with multiple outgoing interfaces.
 */
-assign sclk = clk;
 
 
 /*
