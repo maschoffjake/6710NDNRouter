@@ -58,6 +58,19 @@ fib DUT (
 parameter HIGH = 1'b1;
 parameter LOW = 1'b0;
 
+reg [63:0]          prefix_value;
+reg [7:0]           metadata_value;
+reg [255:0]         data_value;
+reg [327:0]		    data_packet;
+reg [71:0]          interest_packet;
+
+reg                 start_incoming_interest_packet;
+reg                 start_incoming_data_packet;
+reg                 start_outgoing_interest_packet;
+reg                 start_outgoing_data_packet;
+
+reg [2:0]           state;
+
 initial begin
 	// Reset and set all values to 0
 	rst = HIGH;
@@ -70,47 +83,21 @@ initial begin
     RX_valid = LOW;
     data_SPI_to_FIB = LOW;
 
-    start_outgoing_packet_simulation = LOW;
-    start_incoming_packet_simulation = LOW;
+    start_incoming_data_packet = LOW;
+    start_incoming_interest_packet = LOW;
+    start_outgoing_data_packet = LOW;
+    start_outgoing_interest_packet = LOW;
 	#100;
 	rst = 1'b0;
 
-    // Testing outgoing logic!
+    // Testing incoming logic (interest packet)!
     prefix_value = 64'h0000FFFF0000FFFF;
-    prefix_length = 6'd10;
-    start_outgoing_packet_simulation = HIGH;
+    metadata_value = 6'd48;
+    interest_packet = {metadata_value, prefix_value};
+    state = 0;
+    start_incoming_interest_packet = HIGH;
     #20;
-    start_outgoing_packet_simulation = LOW;
-    #1000;
-
-    // Testing incoming logic with rejection
-    prefix_value = 64'h0000FFFF0000FFFF;
-    prefix_length = 6'd10;
-    start_incoming_packet_simulation = HIGH;
-    #100;
-    start_incoming_packet_simulation = LOW;
-    #100;
-    rejected = 1;
-    #100;
-
-    // Testing incoming logic with accepted packet
-    prefix_value = 64'h0000FFFF0000FFFF;
-    prefix_length = 6'd10;
-    start_incoming_packet_simulation = HIGH;
-    rejected = 0;
-    #100;
-    start_incoming_packet_simulation = LOW;
-    #200;
-    start_send_to_pit = 1;
-    #100;
-    start_send_to_pit = 0;
-
-    // Testing outgoing logic, should get a cache hit!
-    prefix_value = 64'h0000FFFF0000FFFF;
-    prefix_length = 6'd10;
-    start_outgoing_packet_simulation = HIGH;
-    #20;
-    start_outgoing_packet_simulation = LOW;
+    start_incoming_interest_packet = LOW;
     #1000;
 end
 
@@ -120,32 +107,33 @@ initial begin
 	forever #10 clk = ~clk;
 end
 
-// Used for simulating the outgoing logic
-always@(start_outgoing_packet_simulation) begin
-    if (start_outgoing_packet_simulation == HIGH) begin
-        pit_in_prefix <= prefix_value;
-        pit_in_len <= prefix_length;
-        fib_out_bit <= HIGH;
-    end
-    else begin
-        pit_in_prefix <= 64'd0;
-        pit_in_len <= 6'd0;
-        fib_out_bit <= LOW;
-    end
-end
-
-// Used for simulating the incoming logic
-always@(start_incoming_packet_simulation) begin
-    if (start_incoming_packet_simulation == HIGH) begin
-        data_in_prefix <= prefix_value;
-        data_in_len <= prefix_length;
-        data_ready <= HIGH;
-    end
-    else begin
-        data_in_prefix <= 64'd0;
-        data_in_len <= 6'd0;
-        data_ready <= LOW;
-    end
+reg [10:0] bytes_sent;
+// Used for simulating data coming from SPI to FIB (interest packet!)
+always@(posedge clk) begin
+    case (state)
+        // Wait State
+        0: begin
+            if (start_incoming_interest_packet) begin
+                RX_valid <= HIGH;
+                state <= 1;
+                bytes_sent <= 0;
+            end
+        end
+        // Send data
+        1: begin
+            if (bytes_sent <= 8) begin
+                state <= 0;
+            end
+            else begin
+                data_SPI_to_FIB <= interest_packet[71:64];
+                interest_packet <= interest_packet << 8;
+                state <= 1;
+            end
+        end
+        default: begin
+            state <= 0;
+        end 
+    endcase
 end
 
 endmodule
