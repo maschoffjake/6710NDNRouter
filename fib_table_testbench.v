@@ -263,7 +263,6 @@ initial begin
     prefix_input_from_pit = 64'h0000FF0F0000FFF0;
     metadata_input_from_pit = 8'd48;
     data_value = "here is fake data";
-    reject = HIGH;
     start_outgoing_data_packet = HIGH;
     #20;
     start_outgoing_data_packet = LOW;
