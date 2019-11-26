@@ -112,13 +112,13 @@ fib_table fib_module (
 spi_mcu spi_mcu_module(
     .mosi(mosi_from_mcu), //Input
     .miso(miso_to_mcu), //Output
-    .cs(cs_from_mcu), //Input
     .clk(clk), //Input
     .rst(rst), //Input
+	.cs(cs_from_mcu),
     .PIT_to_SPI_bit(PIT_to_SPI_bit), //Input
     .PIT_to_SPI_data(out_data), //Input[7:0]
-    .PIT_to_SPI_prefix(SPI_to_PIT_prefix), //input[63:0]
-    .SPI_to_PIT_bit(pit_in_bit), //Output
+    .PIT_to_SPI_prefix(FIB_to_PIT_prefix), //input[63:0]
+    .SPI_to_PIT_bit(interest_packet), //Output
     .SPI_to_PIT_length(len), //Output[5:0]
     .SPI_to_PIT_prefix(SPI_to_PIT_prefix) //Output[63:0]
 );
@@ -126,7 +126,6 @@ spi_mcu spi_mcu_module(
 spi_interface spi_interface_module(
     .mosi(mosi_to_interface), //Output
     .miso(miso_from_interface), //Input
-    .cs(cs_to_interface), //Output
     .clk(clk), //Input
     .rst(rst), //Input
     .RX_valid(RX_valid), //Outputs

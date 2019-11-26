@@ -31,7 +31,6 @@ module spi_interface(
     // SPI interfaces
     output reg mosi,
     input miso,
-    output cs,
 
     // Overall inputs
     input clk,
@@ -78,7 +77,6 @@ localparam idle = 0, INTERFACE_to_SPI_meta_state = 1, INTERFACE_to_SPI_prefix_st
     Could easily change this module to allow for more chip selects, so the chip could interface
     with multiple outgoing interfaces.
 */
-assign cs = LOW;
 
 
 /*
