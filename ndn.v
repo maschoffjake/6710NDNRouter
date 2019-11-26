@@ -4,7 +4,15 @@ module ndn(
     input clk,
     input rst,
 
-    // Incoming inputs
+    input mosi_from_mcu;
+    output miso_to_mcu;
+    input cs_from_mcu;
+    
+    input miso_from_interface;
+    output mosi_to_interface;
+    input cs_to_interface;
+
+    /*// Incoming inputs
     input [63:0] SPI_to_PIT_prefix,
     input [5:0] len,
     input out_bit,
@@ -21,7 +29,7 @@ module ndn(
     // Outgoing outputs
     output [63:0] longest_matching_prefix,
     output [5:0] longest_matching_prefix_len,
-    output ready_for_data/*,
+    output ready_for_data,
     output [63:0] total_content,
     output [5:0] total_content_len*/
 );
@@ -108,6 +116,44 @@ single_port_ram ram (
     .clk    (clk),          // input 
 	.rst    (rst),		// input
 	.q      (read_data)     // output [7:0] 
+);
+
+module spi_mcu(
+    mosi, //Input
+    miso, //Output
+    cs, //Input
+    // Overall input
+    clk, //Input
+    rst, //Input
+    // Receiving output
+    RX_valid, //Output              // Valid pulse for 1 cycle for RX byte to know data is ready
+    output_shift_register, //Output[7:0]  // Used to send data to the FIB 
+    // Transferring input
+    TX_valid, //Input             // Valid pulse for 1 cycle for TX byte
+    input_shift_register, //Input
+
+	input reg 			PIT_to_SPI_bit, //Input
+	input reg [7:0] 	PIT_to_SPI_data, //Input[7:0]
+	input reg [63:0] 	PIT_to_SPI_prefix, //input[63:0]
+	output reg 			SPI_to_PIT_bit, //Output
+	output reg [7:0]    SPI_to_PIT_length, //Output
+	output reg [63:0]   SPI_to_PIT_prefix //Output
+);
+
+spi_interface spi_module(
+    // SPI interfaces
+    mosi(mosi_to_interface), //Output
+    miso(miso_from_interface), //Input
+    cs(cs_to_interface), //Output
+    // Overall inputs
+    clk(clk), //Input
+    rst(rst), //Input
+    // Receiving output
+    RX_valid(), //Output              // Valid pulse for 1 cycle for RX byte to know data is ready
+    output_shift_register(), //Output[7:0] // Used to send data to the FIB 
+    // Transferring input
+    TX_valid(), //Input                  // Valid pulse for 1 cycle for TX byte
+    input_shift_register() //Input
 );
 
 endmodule

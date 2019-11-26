@@ -1,6 +1,5 @@
 module hash_testbench();
 reg [63:0] pre_hash;
-reg [4:0] len;
 wire [9:0] hash;
 reg clk;
 reg rst;
@@ -12,7 +11,6 @@ initial begin
 	rst = 0;
 	
 	for(ii = 0; ii < 1000; ii=ii+1) begin
-		len = 5'd63;
 		pre_hash = ii;
 		#1
 		$display("%d = %x", ii, hash);
@@ -35,6 +33,6 @@ always #10 clk = ~clk;
 
 
 
-hash H1(.data(pre_hash), .len(len), .hash(hash), .clk(clk), .rst(rst));
+hash H1(.data(pre_hash), .hash(hash), .clk(clk), .rst(rst));
 
 endmodule
