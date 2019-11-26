@@ -4,13 +4,13 @@ module ndn(
     input clk,
     input rst,
 
-    input mosi_from_mcu;
-    output miso_to_mcu;
-    input cs_from_mcu;
+    input mosi_from_mcu,
+    output miso_to_mcu,
+    input cs_from_mcu,
     
-    input miso_from_interface;
-    output mosi_to_interface;
-    output cs_to_interface;
+    input miso_from_interface,
+    output mosi_to_interface,
+    output cs_to_interface
 );
 
 wire pit_in_bit;            // PITHASH --> PIT
@@ -31,11 +31,13 @@ wire [63:0] FIB_to_PIT_prefix; // FIB --> PIT
 wire interest_packet;        // PITHASH --> PIT
 wire RX_valid;
 wire TX_valid;
-wire [7:0]data_fib_to_spi;
-wire [7:0]data_spi_to_fib;
+wire [7:0] data_fib_to_spi;
+wire [7:0] data_spi_to_fib;
+wire [63:0] SPI_to_PIT_prefix;
+wire [5:0] len;
 //wire [5:0] pit_out_len;     // FIB --> PIT
 
-assign user_data = out_data;
+
 
 pit_hash_table pit_hash_table_module (
     .SPI_to_PIT_prefix         	(SPI_to_PIT_prefix),         // input [63:0]
@@ -99,7 +101,7 @@ single_port_ram ram (
 	.q      (read_data)     // output [7:0] 
 );
 
-module spi_mcu(
+spi_mcu spi_mcu_module(
     .mosi(mosi_from_mcu), //Input
     .miso(miso_to_mcu), //Output
     .cs(cs_from_mcu), //Input
@@ -113,7 +115,7 @@ module spi_mcu(
     .SPI_to_PIT_prefix(SPI_to_PIT_prefix) //Output[63:0]
 );
 
-spi_interface spi_module(
+spi_interface spi_interface_module(
     .mosi(mosi_to_interface), //Output
     .miso(miso_from_interface), //Input
     .cs(cs_to_interface), //Output
