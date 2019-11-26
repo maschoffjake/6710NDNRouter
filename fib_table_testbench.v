@@ -175,7 +175,7 @@ always@(posedge clk) begin
         // Wait State
         0: begin
             bytes_sent_from_pit <= 0;
-            if (start_outgoing_interest_packet) begin
+            if (start_outgoing_data_packet) begin
                 fib_out_bit <= HIGH;
                 start_send_to_pit <= HIGH;
                 pit_in_prefix <= prefix_input_from_pit;
