@@ -10,21 +10,26 @@ module ndn(
     
     input miso_from_interface,
     output mosi_to_interface,
-    output cs_to_interface
+    output cs_to_interface,
+    input [7:0] out_data,     // input [7:0] 
+    input [9:0] address,      // input [9:0] 
+    input [9:0] current_byte, // input [9:0]
+    input write_enable, // input 
+    output [7:0] read_data     // output [7:0] 
 );
 
 wire pit_in_bit;            // PITHASH --> PIT
 wire prefix_ready;          // FIB --> PIT
 wire [10:0] table_entry;    // PITHASH --> PIT
 wire rejected;              // PITHASH --> FIB
-wire [9:0] address;         // PIT --> RAM
-wire [9:0] current_byte;    // PIT --> RAM
-wire [7:0] read_data;       // RAM --> PIT
-wire [7:0] out_data;        // PIT --> RAM/USER
+//wire [9:0] address;         // PIT --> RAM
+//wire [9:0] current_byte;    // PIT --> RAM
+//wire [7:0] read_data;       // RAM --> PIT
+//wire [7:0] out_data;        // PIT --> RAM/USER
 wire [7:0] data_fib_to_pit;
 wire [7:0] FIB_to_PIT_metadata;// FIB --> PITHASH
 wire [7:0] metadata;		// PITHASH --> FIB
-wire write_enable;          // PIT --> RAM
+//wire write_enable;          // PIT --> RAM
 wire start_send_to_pit;     // PIT --> FIB
 wire fib_out_bit;           // PIT --> FIB
 wire [63:0] FIB_to_PIT_prefix; // FIB --> PIT
@@ -94,7 +99,7 @@ fib_table fib_module (
     .data_FIB_to_SPI(data_fib_to_spi) //Output [7:0]
 );
 
-single_port_ram ram (
+/*single_port_ram ram (
 	.data   (out_data),     // input [7:0] 
 	.addr   (address),      // input [9:0] 
 	.byte   (current_byte), // input [9:0]
@@ -102,7 +107,7 @@ single_port_ram ram (
     .clk    (clk),          // input 
 	.rst    (rst),		// input
 	.q      (read_data)     // output [7:0] 
-);
+);*/
 
 spi_mcu spi_mcu_module(
     .mosi(mosi_from_mcu), //Input
