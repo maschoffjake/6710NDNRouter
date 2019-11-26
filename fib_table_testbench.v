@@ -71,46 +71,6 @@ reg                 start_outgoing_data_packet;
 
 reg [2:0]           state;
 
-initial begin
-	// Reset and set all values to 0
-	rst = HIGH;
-    pit_in_prefix = LOW;
-    pit_in_metadata = LOW;
-    rejected = LOW;
-    fib_out_bit = LOW;
-    start_send_to_pit = LOW;
-    data_PIT_to_FIB = LOW;
-    RX_valid = LOW;
-    data_SPI_to_FIB = LOW;
-
-    start_incoming_data_packet = LOW;
-    start_incoming_interest_packet = LOW;
-    start_outgoing_data_packet = LOW;
-    start_outgoing_interest_packet = LOW;
-	#100;
-	rst = 1'b0;
-
-    // Testing incoming logic (interest packet)!
-    prefix_value = 64'h0000FFFF0000FFFF;
-    metadata_value = 8'd112;
-    interest_packet = {metadata_value, prefix_value};
-    state = 0;
-    start_incoming_interest_packet = HIGH;
-    #20;
-    start_incoming_interest_packet = LOW;
-    #1000;
-
-    // Testing incoming logic (data packet)!
-    state_data_packet_incoming = 0;
-    data_value = "this is an example";
-    prefix_value = 64'h0000FFFF0000FFFF;
-    metadata_value = 8'd48;
-    data_packet = {metadata_value, prefix_value, data_value};
-    start_incoming_data_packet = HIGH;
-    #20;
-    start_incoming_data_packet = LOW;
-    #1000;
-end
 
 initial begin
 	// Create clock
@@ -179,6 +139,47 @@ always@(posedge clk) begin
             state_data_packet_incoming <= 0;
         end 
     endcase
+end
+
+initial begin
+	// Reset and set all values to 0
+	rst = HIGH;
+    pit_in_prefix = LOW;
+    pit_in_metadata = LOW;
+    rejected = LOW;
+    fib_out_bit = LOW;
+    start_send_to_pit = LOW;
+    data_PIT_to_FIB = LOW;
+    RX_valid = LOW;
+    data_SPI_to_FIB = LOW;
+
+    start_incoming_data_packet = LOW;
+    start_incoming_interest_packet = LOW;
+    start_outgoing_data_packet = LOW;
+    start_outgoing_interest_packet = LOW;
+	#100;
+	rst = 1'b0;
+
+    // Testing incoming logic (interest packet)!
+    prefix_value = 64'h0000FFFF0000FFFF;
+    metadata_value = 8'd112;
+    interest_packet = {metadata_value, prefix_value};
+    state = 0;
+    start_incoming_interest_packet = HIGH;
+    #20;
+    start_incoming_interest_packet = LOW;
+    #1000;
+
+    // Testing incoming logic (data packet)!
+    state_data_packet_incoming = 0;
+    data_value = "this is an example";
+    prefix_value = 64'h0000FFFF0000FFFF;
+    metadata_value = 8'd48;
+    data_packet = {metadata_value, prefix_value, data_value};
+    start_incoming_data_packet = HIGH;
+    #20;
+    start_incoming_data_packet = LOW;
+    #1000;
 end
 
 endmodule
