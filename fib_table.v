@@ -33,7 +33,7 @@ module fib_table(
     output reg [7:0] data_FIB_to_PIT,
 
     // FIB --> SPI
-    output reg FIB_to_SPI_data_flag,
+    output reg FIB_to_SPI_data_flag, //TX
     output reg [7:0] data_FIB_to_SPI
 );
 
