@@ -380,17 +380,18 @@ end
 
 always @(posedge clk, posedge rst) begin
 	if (rst) begin
-		outgoing_state <= 0;
-        prefix <= 0;
-        metadata <= 0;
-        saved_hash_out <= 0;
-        total_prefix <= 0;
-        total_prefix_count <= 0;
-        longest_matching_prefix_count <= 0;
-        data_packet <= 0;
-        data_to_send <= 0;
-        pit_input_byte_counter <= 0;
-        fib_to_spi_data_count <= 0;
+		outgoing_state <= LOW:
+        prefix <= LOW:
+        metadata <= LOW:
+        saved_hash_out <= LOW:
+        total_prefix <= LOW:
+        total_prefix_count <= LOW:
+        longest_matching_prefix_count <= LOW:
+        data_packet <= LOW:
+        data_to_send <= LOW:
+        pit_input_byte_counter <= LOW:
+        fib_to_spi_data_count <= LOW:
+        FIB_to_SPI_data_flag <= LOW;
     end
     else begin
         case (outgoing_state)
@@ -430,7 +431,7 @@ always @(posedge clk, posedge rst) begin
                 end
                 else begin
                     // Otherwise we have the correct values and we need to send them to spi to send out, let SPI know we are sending data next cycle
-                    FIB_to_SPI_data_flag <= 1;
+                    FIB_to_SPI_data_flag <= HIGH;
                     outgoing_state <= outgoing_next_state;
                 end
             end
@@ -453,6 +454,13 @@ always @(posedge clk, posedge rst) begin
                 longest_matching_prefix_count <= longest_matching_prefix_count - 1;
             end
             receive_data_from_PIT: begin
+
+                // Need to set the flag high for the SPI to know we are sending data next cycle
+                if (pit_input_byte_counter == 0) begin
+                    FIB_to_SPI_data_flag <= HIGH;
+                end
+
+                // Let the sending mechanism know we are sending a data packet
                 data_packet <= HIGH;
                 data_to_send <= (data_to_send << 8) + data_PIT_to_FIB;
                 outgoing_state <= outgoing_next_state;
