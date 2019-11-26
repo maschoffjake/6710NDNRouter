@@ -4,7 +4,7 @@ input rst;
 input clk;
 output reg [9:0]hash;
 
-localparam [63:0][9:0] hfunction = {
+localparam [9:0] hfunction [63:0] = '{
 	10'b0110110101,
 	10'b0000100000,
 	10'b0101101001,

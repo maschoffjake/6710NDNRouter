@@ -186,7 +186,7 @@ always@(posedge clk, posedge rst)
 				end
 				if(data_input_count == 1) begin
 					transmitting_state <= send_prefix;
-					SPI_prefix = PIT_to_SPI_prefix;
+					SPI_prefix <= PIT_to_SPI_prefix;
                  	data_input_count <= 255;
 				end
 			end 

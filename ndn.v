@@ -34,7 +34,7 @@ wire TX_valid;
 wire [7:0] data_fib_to_spi;
 wire [7:0] data_spi_to_fib;
 wire [63:0] SPI_to_PIT_prefix;
-wire [5:0] len
+wire [5:0] len;
 //wire [5:0] pit_out_len;     // FIB --> PIT
 
 
