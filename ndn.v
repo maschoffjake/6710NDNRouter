@@ -35,6 +35,8 @@ wire [7:0] data_fib_to_spi;
 wire [7:0] data_spi_to_fib;
 wire [63:0] SPI_to_PIT_prefix;
 wire [5:0] len;
+wire out_bit;
+wire PIT_to_SPI_bit;
 //wire [5:0] pit_out_len;     // FIB --> PIT
 
 
@@ -49,7 +51,7 @@ pit_hash_table pit_hash_table_module (
     .clk           			    (clk),            // input
     .rst            			(rst),            // input
     .table_entry    			(table_entry),    // output [11:0]
-    .metadata       			(metadata),        // output [7:0]
+    .meta_data       			(metadata),        // output [7:0]
     .pit_in_bit     			(pit_in_bit),     // output
     .rejected       			(rejected),        // output
     .interest_packet			(interest_packet)
