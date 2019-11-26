@@ -99,9 +99,17 @@ initial begin
     #20;
     start_incoming_interest_packet = LOW;
     #1000;
+
+    // Testing incoming logic (data packet)!
+    state_data_packet_incoming = 0;
     data_value = "this is an example";
     prefix_value = 64'h0000FFFF0000FFFF;
     metadata_value = 8'd48;
+    data_packet = {metadata_value, prefix_value, data_value};
+    start_incoming_data_packet = HIGH;
+    #20;
+    start_incoming_data_packet = LOW;
+    #1000;
 end
 
 initial begin
@@ -132,10 +140,43 @@ always@(posedge clk) begin
                 data_SPI_to_FIB <= interest_packet[71:64];
                 interest_packet <= interest_packet << 8;
                 state <= 1;
+                bytes_sent <= bytes_sent + 1;
             end
         end
         default: begin
             state <= 0;
+        end 
+    endcase
+end
+
+reg [10:0] bytes_sent_data_packet;
+reg [1:0] state_data_packet_incoming;
+// Used for simulating data coming from SPI to FIB (interest packet!)
+always@(posedge clk) begin
+    case (state_data_packet_incoming)
+        // Wait State
+        0: begin
+            if (start_incoming_data_packet) begin
+                RX_valid <= HIGH;
+                state_data_packet_incoming <= 1;
+            end
+            bytes_sent_data_packet <= 0;
+        end
+        // Send data
+        1: begin
+            RX_valid <= LOW;
+            if (bytes_sent_data_packet == 327) begin
+                state_data_packet_incoming <= 0;
+            end
+            else begin
+                data_SPI_to_FIB <= data_packet[327:320];
+                data_packet <= data_packet << 8;
+                state_data_packet_incoming <= 1;
+                bytes_sent_data_packet <= bytes_sent_data_packet + 1;
+            end
+        end
+        default: begin
+            state_data_packet_incoming <= 0;
         end 
     endcase
 end
