@@ -144,38 +144,6 @@ always@(posedge clk) begin
     endcase
 end
 
-reg [10:0] bytes_sent_data_packet;
-reg [1:0] state_data_packet_incoming;
-// Used for simulating data coming from PIT to FIB (interest packet!)
-always@(posedge clk) begin
-    case (state_data_packet_incoming)
-        // Wait State
-        0: begin
-            if (start_incoming_data_packet) begin
-                RX_valid <= HIGH;
-                state_data_packet_incoming <= 1;
-            end
-            bytes_sent_data_packet <= 0;
-        end
-        // Send data
-        1: begin
-            RX_valid <= LOW;
-            if (bytes_sent_data_packet == 327) begin
-                state_data_packet_incoming <= 0;
-            end
-            else begin
-                data_SPI_to_FIB <= data_packet[327:320];
-                data_packet <= data_packet << 8;
-                state_data_packet_incoming <= 1;
-                bytes_sent_data_packet <= bytes_sent_data_packet + 1;
-            end
-        end
-        default: begin
-            state_data_packet_incoming <= 0;
-        end 
-    endcase
-end
-
 reg [1:0] state_interest_packet_outgoing;
 // Used for simulating data coming from PIT to FIB (interest packet!)
 always@(posedge clk) begin
