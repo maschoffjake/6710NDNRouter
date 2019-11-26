@@ -436,6 +436,8 @@ always @(posedge clk, posedge rst) begin
                 end
             end
             send_meta_data_to_spi: begin
+                // Set flag back to 0
+                FIB_to_SPI_data_flag <= LOW;
                 data_FIB_to_SPI <= metadata;
                 outgoing_state <= outgoing_next_state;
             end
