@@ -150,16 +150,18 @@ always@(posedge clk) begin
     case (state_interest_packet_outgoing)
         // Wait State
         0: begin
+            state_interest_packet_outgoing <= 0;
             if (start_outgoing_interest_packet) begin
+                state_interest_packet_outgoing <= 1;
                 fib_out_bit <= HIGH;
                 pit_in_prefix <= prefix_input_from_pit;
                 pit_in_metadata <= metadata_input_from_pit;
             end
-            else begin
-                fib_out_bit <= LOW;
-                pit_in_prefix <= LOW;
-                pit_in_metadata <= LOW; 
-            end
+        end
+        1: begin
+            fib_out_bit <= LOW;
+            pit_in_prefix <= LOW;
+            pit_in_metadata <= LOW; 
         end
         default: begin
             state_interest_packet_outgoing <= 0;
