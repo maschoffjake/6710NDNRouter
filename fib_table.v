@@ -380,17 +380,17 @@ end
 
 always @(posedge clk, posedge rst) begin
 	if (rst) begin
-		outgoing_state <= LOW:
-        prefix <= LOW:
-        metadata <= LOW:
-        saved_hash_out <= LOW:
-        total_prefix <= LOW:
-        total_prefix_count <= LOW:
-        longest_matching_prefix_count <= LOW:
-        data_packet <= LOW:
-        data_to_send <= LOW:
-        pit_input_byte_counter <= LOW:
-        fib_to_spi_data_count <= LOW:
+		outgoing_state <= LOW;
+        prefix <= LOW;
+        metadata <= LOW;
+        saved_hash_out <= LOW;
+        total_prefix <= LOW;
+        total_prefix_count <= LOW;
+        longest_matching_prefix_count <= LOW;
+        data_packet <= LOW;
+        data_to_send <= LOW;
+        pit_input_byte_counter <= LOW;
+        fib_to_spi_data_count <= LOW;
         FIB_to_SPI_data_flag <= LOW;
     end
     else begin
