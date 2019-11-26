@@ -31,7 +31,6 @@
 module spi_mcu(
     input mosi,
     output reg miso,
-    input cs,
 
     // Overall inputs
     input clk,
@@ -193,7 +192,7 @@ always@(posedge clk, posedge rst)
                     // Check to see if we are transferring data
                     transmitting_state <= send_data;
                 end
-                miso <= SPI_prefix[31];
+                miso <= SPI_prefix[63];
 				SPI_prefix <= SPI_prefix << 1;
                 prefix_input_count <= prefix_input_count - 1;
             end
