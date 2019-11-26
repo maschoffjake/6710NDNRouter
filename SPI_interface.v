@@ -53,9 +53,9 @@ reg [5:0] prefix_count;
 reg [7:0] data_count;
 
 // Reg's to store data to send to the fib
-reg [7:0]    packet_meta_data;
-reg [63:0]   packet_prefix;
-reg [255:0]  packet_data;
+reg [7:0]    SPI_to_FIB_metadata;
+reg [63:0]   SPI_to_FIB_prefix;
+reg [255:0]  SPI_to_FIB_data;
 
 // Flag for if the current packet being received is a interest/data
 reg isInterestPacket;
@@ -72,7 +72,7 @@ reg [2:0] prefix_byte_count;
 reg [4:0] data_byte_count;
 
 // State names
-localparam idle = 0, receiving_meta_packet_info = 1, receiving_packet_prefix = 2, receiving_packet_data = 3, send_metadata_to_fib = 4, send_prefix_to_fib = 5, send_data_to_fib = 6;
+localparam idle = 0, INTERFACE_to_SPI_meta_state = 1, INTERFACE_to_SPI_prefix_state = 2, INTERFACE_to_SPI_packet_state = 3, SPI_to_FIB_meta_state = 4, SPI_to_FIB_prefix_state = 5, SPI_to_FIB_data_state = 6;
 
 /* 
     Just assign the chip select low for now, since we are only interfacing with one interface.
@@ -90,9 +90,9 @@ always@(posedge clk, posedge rst) begin
     if (rst) begin
         RX_valid <= 0;
         receiving_state <= idle;
-        packet_meta_data <= 8'd0;
-        packet_prefix <= 64'd0;
-        packet_data <= 255'd0;
+        SPI_to_FIB_metadata <= 8'd0;
+        SPI_to_FIB_prefix <= 64'd0;
+        SPI_to_FIB_data <= 255'd0;
         prefix_byte_count <= 0;
         data_byte_count <= 0;
     end
@@ -100,9 +100,9 @@ always@(posedge clk, posedge rst) begin
         case (receiving_state)
             idle: begin
                 RX_valid <= 0;
-                packet_meta_data <= 0;
-                packet_prefix <= 0;
-                packet_data <= 0;
+                SPI_to_FIB_metadata <= 0;
+                SPI_to_FIB_prefix <= 0;
+                SPI_to_FIB_data <= 0;
                 meta_data_count <= 7;
                 prefix_count <= 63;
                 data_count <= 255;
@@ -111,10 +111,10 @@ always@(posedge clk, posedge rst) begin
 
                 // Wait for miso to go low (start bit)
                 if (!miso) begin
-                    receiving_state <= receiving_meta_packet_info;
+                    receiving_state <= INTERFACE_to_SPI_meta_state;
                 end
             end 
-            receiving_meta_packet_info: begin
+            INTERFACE_to_SPI_meta_state: begin
                 // First bit of a packet is a filler bit, so grab second. If it's high, interest packet!
                 if (meta_data_count == 6) begin
                     if (miso) begin
@@ -124,52 +124,52 @@ always@(posedge clk, posedge rst) begin
                         isInterestPacket = LOW;
                     end
                     // Set the packet type in the packet container
-                    packet_meta_data[meta_data_count] <= miso;
+                    SPI_to_FIB_metadata[meta_data_count] <= miso;
                     meta_data_count <= meta_data_count - 1;
                 end
                 // Grab after the 2nd bit to continue to fill in the meta packet info
                 else if (meta_data_count > 1) begin
-                    packet_meta_data[meta_data_count] <= miso;
+                    SPI_to_FIB_metadata[meta_data_count] <= miso;
                 end
                 // Once all meta data has been received, time to receive packet prefix!
                 else if (meta_data_count == 0) begin
-                    packet_meta_data[meta_data_count] <= miso;
-                    receiving_state <= receiving_packet_prefix;
+                    SPI_to_FIB_metadata[meta_data_count] <= miso;
+                    receiving_state <= INTERFACE_to_SPI_prefix_state;
                 end
                 meta_data_count <= meta_data_count - 1;
             end
-            receiving_packet_prefix: begin
+            INTERFACE_to_SPI_prefix_state: begin
                 // Time to move states 
                 if (prefix_count == 0) begin
                     // If this was an interest packet, done receving, set bit high so FIB can grab data and go back to idle
                     if (isInterestPacket) begin
                         RX_valid <= HIGH;
-                        receiving_state <= send_metadata_to_fib;
+                        receiving_state <= SPI_to_FIB_meta_state;
                     end
                     // Otherwise we must receive the data content of the packet as well
                     else begin
-                        receiving_state <= receiving_packet_data;
+                        receiving_state <= INTERFACE_to_SPI_packet_state;
                     end    
                 end
 
                 // Save data and increment counters
-                packet_prefix[prefix_count] <= miso; 
+                SPI_to_FIB_prefix[prefix_count] <= miso; 
                 prefix_count <= prefix_count - 1;
             end
-            receiving_packet_data: begin
+            INTERFACE_to_SPI_packet_state: begin
                 // Time to move states and let FIB know that the data packet is and forward data!
                 if (data_count == 0) begin
                     RX_valid <= HIGH;
-                    receiving_state <= send_metadata_to_fib;
+                    receiving_state <= SPI_to_FIB_meta_state;
                 end
-                packet_data[data_count] <= miso;
+                SPI_to_FIB_data[data_count] <= miso;
                 data_count <= data_count - 1;
             end
-            send_metadata_to_fib: begin
-                output_shift_register <= packet_meta_data;
-                receiving_state <= send_prefix_to_fib;
+            SPI_to_FIB_meta_state: begin
+                output_shift_register <= SPI_to_FIB_metadata;
+                receiving_state <= SPI_to_FIB_prefix_state;
             end
-            send_prefix_to_fib: begin
+            SPI_to_FIB_prefix_state: begin
                 if (prefix_byte_count == 0) begin
                     // Done sending prefix data!
                     if (isInterestPacket) begin
@@ -178,22 +178,22 @@ always@(posedge clk, posedge rst) begin
                     end
                     // Otherwise we need to send data
                     else begin
-                        receiving_state <= send_data_to_fib;
+                        receiving_state <= SPI_to_FIB_data_state;
                     end
                 end
                 // Grab the 8 MSB and shift them out to grab next 8 MSBs
-                output_shift_register <= packet_prefix[63:56];
-				packet_prefix <= packet_prefix << 8;
+                output_shift_register <= SPI_to_FIB_prefix[63:56];
+				SPI_to_FIB_prefix <= SPI_to_FIB_prefix << 8;
                 prefix_byte_count <= prefix_byte_count - 1;
             end
-            send_data_to_fib: begin
+            SPI_to_FIB_data_state: begin
                 if (data_byte_count == 0) begin
                     // Done sendind data! Back to idle
                     receiving_state <= idle;
                 end
                 // Grab the 8 MSB and shift them out to grab next 8 MSBs
-                output_shift_register <= packet_data[255:248];
-				packet_data <= packet_data << 8;
+                output_shift_register <= SPI_to_FIB_data[255:248];
+				SPI_to_FIB_data <= SPI_to_FIB_data << 8;
                 data_byte_count <= data_byte_count - 1;
             end
             default: begin
@@ -210,11 +210,11 @@ reg [7:0] data_input_count;
 reg transferring_data_packet;
 
 // Save input values when flag goes high
-reg [7:0]    packet_meta_data_input_save;
-reg [63:0]   packet_prefix_input_save;
-reg [255:0]  packet_data_input_save;
+reg [7:0]    FIB_to_SPI_metadata;
+reg [63:0]   FIB_to_SPI_prefix;
+reg [255:0]  FIB_to_SPI_data;
 
-parameter packet_meta = 1, packet_prefix_state = 2, packet_data_state = 3, send_meta_data = 4, send_prefix = 5, send_data = 6;
+parameter FIB_to_SPI_meta_state = 1, FIB_to_SPI_prefix_state = 2, FIB_to_SPI_data_state = 3, SPI_to_INTERFACE_meta = 4, SPI_to_INTERFACE_prefix = 5, SPI_to_INTERFACE_data = 6;
 reg [2:0] transmitting_state;
 
 /*
@@ -229,9 +229,9 @@ always@(posedge clk, posedge rst)
         data_input_count <= 0;
         mosi <= HIGH;
         transferring_data_packet <= LOW;
-        packet_meta_data_input_save <= 0;
-        packet_data_input_save <= 0;
-        packet_prefix_input_save <= 0;
+        FIB_to_SPI_metadata <= 0;
+        FIB_to_SPI_data <= 0;
+        FIB_to_SPI_prefix <= 0;
     end
     else begin
         case (transmitting_state)
@@ -245,72 +245,72 @@ always@(posedge clk, posedge rst)
                 if (TX_valid) begin
                     // Send start bit to start transfer and change states
                     mosi <= LOW;
-                    transmitting_state <= packet_meta;
+                    transmitting_state <= FIB_to_SPI_meta_state;
                 end
                 // Keep data line high (so the interface knows nothing is transferring)
                 else begin
                     mosi <= HIGH;
                 end
             end
-			packet_meta: begin
+			FIB_to_SPI_meta_state: begin
 				if(meta_data_input_count > 0) begin
-				packet_meta_data_input_save <= input_shift_register;
+				FIB_to_SPI_metadata <= input_shift_register;
 				meta_data_input_count <= meta_data_input_count - 1;
 				end
 				if(meta_data_input_count == 1) begin
-				transmitting_state <= packet_prefix_state;
+				transmitting_state <= FIB_to_SPI_prefix_state;
 				meta_data_input_count <= 7;
 				end
 			end
-			packet_prefix_state: begin
+			FIB_to_SPI_prefix_state: begin
 				if(prefix_input_count > 0) begin
-					packet_prefix_input_save <= (packet_prefix_input_save << 8) + input_shift_register;
+					FIB_to_SPI_prefix <= (FIB_to_SPI_prefix << 8) + input_shift_register;
 					prefix_input_count <= prefix_input_count - 1;
 				end
 				if(prefix_input_count == 1) begin
-					transmitting_state <= packet_data_state;
+					transmitting_state <= FIB_to_SPI_data_state;
                 	prefix_input_count <= 63;
 				end
 			end
-			packet_data_state: begin
+			FIB_to_SPI_data_state: begin
 				if(data_input_count > 0) begin
-					packet_data_input_save <= (packet_data_input_save << 8) + input_shift_register;	
+					FIB_to_SPI_data <= (FIB_to_SPI_data << 8) + input_shift_register;	
 					data_input_count <= data_input_count - 1;			
 				end
 				if(data_input_count == 1) begin
-					transmitting_state <= send_meta_data;
+					transmitting_state <= SPI_to_INTERFACE_meta;
                  	data_input_count <= 255;
 				end
 			end 
-            send_meta_data: begin
+            SPI_to_INTERFACE_meta: begin
                 if (meta_data_input_count == 0) begin
-                    transmitting_state <= send_prefix;
+                    transmitting_state <= SPI_to_INTERFACE_prefix;
                 end 
                 else if (meta_data_input_count == 6) begin
-                    transferring_data_packet <= !packet_meta_data_input_save[meta_data_input_count]; // See if the packet being transferred is a data packet, so we know what we are transferring
+                    transferring_data_packet <= !FIB_to_SPI_metadata[meta_data_input_count]; // See if the packet being transferred is a data packet, so we know what we are transferring
                 end
-                mosi <= packet_meta_data_input_save[meta_data_input_count];
+                mosi <= FIB_to_SPI_metadata[meta_data_input_count];
                 meta_data_input_count <= meta_data_input_count - 1;
             end
-            send_prefix: begin
+            SPI_to_INTERFACE_prefix: begin
                 if (prefix_input_count == 0) begin
                     // Check to see if we are transferring data
                     if (transferring_data_packet) begin
-                        transmitting_state <= send_data;
+                        transmitting_state <= SPI_to_INTERFACE_data;
                     end
                     // If not, go back to idle
                     else begin
                         transmitting_state <= idle;
                     end
                 end
-                mosi <= packet_prefix_input_save[prefix_input_count];
+                mosi <= FIB_to_SPI_prefix[prefix_input_count];
                 prefix_input_count <= prefix_input_count - 1;
             end
-            send_data: begin
+            SPI_to_INTERFACE_data: begin
                 if (data_input_count == 0) begin
                     transmitting_state <= idle;
                 end
-                mosi <= packet_data_input_save[data_input_count];
+                mosi <= FIB_to_SPI_data[data_input_count];
                 data_input_count <= data_input_count - 1;
             end
         endcase
