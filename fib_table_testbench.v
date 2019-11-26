@@ -144,10 +144,32 @@ always@(posedge clk) begin
     endcase
 end
 
+reg [1:0] state_interest_packet_outgoing;
+// Used for simulating data coming from PIT to FIB (interest packet!)
+always@(posedge clk) begin
+    case (state_interest_packet_outgoing)
+        // Wait State
+        0: begin
+            if (start_outgoing_interest_packet) begin
+                fib_out_bit <= HIGH;
+                pit_in_prefix <= prefix_input_from_pit;
+                pit_in_metadata <= metadata_input_from_pit;
+            end
+            else begin
+                fib_out_bit <= LOW;
+                pit_in_prefix <= LOW;
+                pit_in_metadata <= LOW; 
+            end
+        end
+        default: begin
+            state_interest_packet_outgoing <= 0;
+        end 
+    endcase
+end
+
 reg [1:0] state_data_packet_outgoing;
 reg [10:0] bytes_sent_from_pit;
-reg reject;
-// Used for simulating data coming from PIT to FIB (interest packet!)
+// Used for simulating data coming from PIT to FIB (data packet!)
 always@(posedge clk) begin
     case (state_data_packet_outgoing)
         // Wait State
@@ -236,22 +258,12 @@ initial begin
     start_outgoing_interest_packet = LOW;
     #1000;
 
-    // Testing outgoing logic (data packet) with no cache hit and rejection!
+    // Testing outgoing logic (data packet) with no cache hit!
     state_data_packet_outgoing = 0;
     prefix_input_from_pit = 64'h0000FF0F0000FFF0;
     metadata_input_from_pit = 8'd48;
     data_value = "here is fake data";
     reject = HIGH;
-    start_outgoing_data_packet = HIGH;
-    #20;
-    start_outgoing_data_packet = LOW;
-    #1000;
-
-    // Testing outgoing logic (data packet) with no cache hit and no rejection!
-    state_data_packet_outgoing = 0;
-    prefix_input_from_pit = 64'h0000F00F0000FFF0;
-    metadata_input_from_pit = 8'd48;
-    reject = LOW;
     start_outgoing_data_packet = HIGH;
     #20;
     start_outgoing_data_packet = LOW;
