@@ -110,7 +110,6 @@ spi_mcu spi_mcu_module(
     .cs(cs_from_mcu), //Input
     .clk(clk), //Input
     .rst(rst), //Input
-    .output_shift_register(data_fib_to_pit), //Output[7:0]
     .PIT_to_SPI_bit(PIT_to_SPI_bit), //Input
     .PIT_to_SPI_data(out_data), //Input[7:0]
     .PIT_to_SPI_prefix(SPI_to_PIT_prefix), //input[63:0]

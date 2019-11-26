@@ -37,10 +37,6 @@ module spi_mcu(
     input clk,
     input rst,
 
-    // Receiving output
-    output reg [7:0]        output_shift_register,  // Used to send data to the FIB 
-
-
 	input [7:0] 	PIT_to_SPI_data,
 	input [63:0] 	PIT_to_SPI_prefix,
 	input		PIT_to_SPI_bit,
