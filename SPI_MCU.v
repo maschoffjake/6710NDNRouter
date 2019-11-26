@@ -64,7 +64,7 @@ localparam HIGH = 1;
 localparam LOW = 0;
 
 // State for receving
-reg [2:0] receiving_state;
+reg [1:0] receiving_state;
 
 // Counts for what bytes we are on
 reg [2:0] prefix_byte_count;
@@ -149,7 +149,7 @@ reg transferring_data_packet;
 reg [255:0]  SPI_to_USER_data;
 
 localparam packet_data_state = 1, send_prefix = 2, send_data = 3;
-reg [2:0] transmitting_state;
+reg [1:0] transmitting_state;
 
 /*
     TRANSFERRING DATA STATE MACHINE
