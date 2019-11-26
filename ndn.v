@@ -10,7 +10,6 @@ module ndn(
     
     input miso_from_interface,
     output mosi_to_interface,
-    output cs_to_interface,
     output [7:0] out_data,     // input [7:0] 
     output [9:0] address,      // input [9:0] 
     output [9:0] current_byte, // input [9:0]

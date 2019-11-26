@@ -1,4 +1,4 @@
-/*
+F/*
     This SPI module is used to from NDN --> MCU (user).
     In this set up the NDN module acts as the slave, and the MCU acts as the
     master.
@@ -193,7 +193,7 @@ always@(posedge clk, posedge rst)
                     // Check to see if we are transferring data
                     transmitting_state <= send_data;
                 end
-                miso <= SPI_prefix[31];
+                miso <= SPI_prefix[63];
 				SPI_prefix <= SPI_prefix << 1;
                 prefix_input_count <= prefix_input_count - 1;
             end
