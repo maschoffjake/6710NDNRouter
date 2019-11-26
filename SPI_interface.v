@@ -126,7 +126,7 @@ always@(posedge clk, posedge rst) begin
                     meta_data_count <= meta_data_count - 1;
                 end
                 // Grab after the 2nd bit to continue to fill in the meta packet info
-                else if (meta_data_count => 1) begin
+                else if (meta_data_count > 0) begin
                     SPI_to_FIB_metadata[meta_data_count] <= miso;
                 end
                 // Once all meta data has been received, time to receive packet prefix!
