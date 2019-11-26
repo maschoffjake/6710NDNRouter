@@ -31,7 +31,6 @@
 module spi_mcu(
     input mosi,
     output reg miso,
-    input cs,
 
     // Overall inputs
     input clk,
