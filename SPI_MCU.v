@@ -47,11 +47,11 @@ module spi_mcu(
     input [7:0]         input_shift_register,
 
 	input reg 			PIT_to_SPI_bit,
-	input reg [7:0] 	out_data,
-	input reg [63:0] 	pit_packet_prefix,
-	output reg 			out_bit,
-	output reg [7:0]    packet_length,
-	output reg [63:0]   packet_prefix
+	input reg [7:0] 	PIT_to_SPI_data,
+	input reg [63:0] 	PIT_to_SPI_prefix,
+	output reg 			SPI_to_PIT_bit,
+	output reg [7:0]    SPI_to_PIT_length,
+	output reg [63:0]   SPI_to_PIT_prefix
 );
 
 
@@ -93,17 +93,17 @@ always@(posedge clk, posedge rst) begin
     if (rst) begin
         RX_valid <= 0;
         receiving_state <= idle;
-        packet_length <= 6'd0;
-        packet_prefix <= 64'd0;
+        SPI_to_PIT_length <= 6'd0;
+        SPI_to_PIT_prefix <= 64'd0;
         prefix_byte_count <= 0;
     end
     else begin
         case (receiving_state)
             idle: begin
-				out_bit <= 0;
+				SPI_to_PIT_bit <= 0;
                 RX_valid <= 0;
-                packet_length <= 0;
-                packet_prefix <= 0;
+                SPI_to_PIT_length <= 0;
+                SPI_to_PIT_prefix <= 0;
                 length_data_count <= 5;
                 prefix_byte_count <= 7;
 
@@ -115,29 +115,29 @@ always@(posedge clk, posedge rst) begin
             receiving_packet_length: begin
                 // First bit of a packet is a filler bit, so grab second. If it's high, interest packet!
 				if (length_data_count > 0) begin
-                    packet_length[length_data_count] <= miso;
+                    SPI_to_PIT_length[length_data_count] <= miso;
 					length_data_count <= length_data_count - 1;
                 end
                 // Once all meta data has been received, time to receive packet prefix!
                 else if (length_data_count == 0) begin
-                    packet_length[length_data_count] <= miso;
+                    SPI_to_PIT_length[length_data_count] <= miso;
                     receiving_state <= receiving_packet_prefix;
                 end
             end
             receiving_packet_prefix: begin
                 // Time to move states 
 				if(prefix_count > 0) begin
-				   	packet_prefix[prefix_count] <= miso;
+				   	SPI_to_PIT_prefix[prefix_count] <= miso;
                     prefix_count <= prefix_count - 1; 
 				end
                 else if (prefix_count == 0) begin
-			       packet_prefix[prefix_count] <= miso; 
+			       SPI_to_PIT_prefix[prefix_count] <= miso; 
                    receiving_state <= send_data_to_pithash;  
                 end
 
             end
             send_data_to_pithash: begin
-				out_bit <= 1;
+				SPI_to_PIT_bit <= 1;
                 receiving_state <= idle;
             end
             default: begin
@@ -153,7 +153,7 @@ reg [7:0] data_input_count;
 reg transferring_data_packet;
 
 // Save input values when flag goes high
-reg [255:0]  PIT_to_SPI_data;
+reg [255:0]  SPI_to_USER_data;
 
 localparam packet_data_state = 1, send_prefix = 2, send_data = 3;
 reg [2:0] transmitting_state;
@@ -169,7 +169,7 @@ always@(posedge clk, posedge rst)
         data_input_count <= 0;
         miso <= HIGH;
         transferring_data_packet <= LOW;
-        PIT_to_SPI_data <= 0;
+        SPI_to_USER_data <= 0;
     end
     else begin
         case (transmitting_state)
@@ -179,7 +179,7 @@ always@(posedge clk, posedge rst)
 				prefix_input_count <= 63;
                 transferring_data_packet <= LOW; // Default to low
 
-                if (out_bit) begin
+                if (SPI_to_PIT_bit) begin
                     // Send start bit to start transfer and change states
                     transmitting_state <= packet_data_state;
                 end
@@ -190,12 +190,12 @@ always@(posedge clk, posedge rst)
             end
 			packet_data_state: begin
 				if(data_input_count > 0) begin
-					PIT_to_SPI_data <= (PIT_to_SPI_data << 8) + out_data;	
+					SPI_to_USER_data <= (SPI_to_USER_data << 8) + PIT_to_SPI_data;	
 					data_input_count <= data_input_count - 1;			
 				end
 				if(data_input_count == 1) begin
 					transmitting_state <= send_prefix;
-					SPI_prefix = pit_packet_prefix;
+					SPI_prefix = PIT_to_SPI_prefix;
                  	data_input_count <= 255;
 				end
 			end 
@@ -212,8 +212,8 @@ always@(posedge clk, posedge rst)
                 if (data_input_count == 0) begin
                     transmitting_state <= idle;
                 end
-                miso <= PIT_to_SPI_data[255];
-				PIT_to_SPI_data = PIT_to_SPI_data << 1;
+                miso <= SPI_to_USER_data[255];
+				SPI_to_USER_data = SPI_to_USER_data << 1;
                 data_input_count <= data_input_count - 1;
             end
 			default: begin
