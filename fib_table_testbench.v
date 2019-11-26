@@ -92,7 +92,7 @@ initial begin
 
     // Testing incoming logic (interest packet)!
     prefix_value = 64'h0000FFFF0000FFFF;
-    metadata_value = 6'd48;
+    metadata_value = 6'd112;
     interest_packet = {metadata_value, prefix_value};
     state = 0;
     start_incoming_interest_packet = HIGH;
