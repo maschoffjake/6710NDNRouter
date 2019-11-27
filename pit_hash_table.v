@@ -17,8 +17,8 @@ output reg interest_packet; // Added
 
 reg [11:0] cache [63:0]; //Hash table with 63 entries
 reg [9:0] current_address;
-reg [4:0] state;
-reg [4:0] next_state;
+reg [1:0] state;
+reg [1:0] next_state;
 reg [63:0] pre_hash;
 
 wire [5:0]hash;
