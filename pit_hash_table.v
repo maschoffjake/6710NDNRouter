@@ -42,8 +42,6 @@ always @(state, out_bit, prefix_ready) begin
 			temp_table_entry = 0;
 			meta_data = 0;
 			interest_packet = 0;
-			for(ii = 0; ii < 64; ii=ii+1)
-				cache[ii] = 0;
 		end
 		// Wait for input from User or FIB
 		idle: begin
@@ -102,10 +100,13 @@ end
 
 always @(posedge clk, posedge rst) begin
 	if(rst) begin
+		for(ii = 0; ii < 64; ii=ii+1)
+			cache[ii] = 0;
 		state <= reset;
-		cache[hash] <= temp_table_entry;
 	end
 	else begin
+		if (state == get_hash)
+			cache[hash] <= temp_table_entry;
 		state <= next_state;		
 	end
 end
