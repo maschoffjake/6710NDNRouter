@@ -16,6 +16,7 @@ output reg interest_packet; // Added
 
 
 reg [11:0] cache [63:0]; //Hash table with 63 entries
+reg [11:0] temp_table_entry;
 reg [9:0] current_address;
 reg [1:0] state;
 reg [1:0] next_state;
@@ -38,6 +39,7 @@ always @(state, out_bit, prefix_ready) begin
 			pre_hash = 0;
 			pit_in_bit = 0;
 			table_entry = 0;
+			temp_table_entry = 0;
 			meta_data = 0;
 			interest_packet = 0;
 			for(ii = 0; ii < 64; ii=ii+1)
@@ -47,6 +49,7 @@ always @(state, out_bit, prefix_ready) begin
 		idle: begin
 			if(prefix_ready || out_bit) begin
 				table_entry = 0;
+				temp_table_entry = 0;
 				pit_in_bit = 0;
 				interest_packet = 0;
 				// Set values based on who raised flag
@@ -64,12 +67,13 @@ always @(state, out_bit, prefix_ready) begin
 		end
 		// Hash is ready now, so get table entry or create new one
 		get_hash: begin
-			if(cache[hash][11]) begin
+			temp_table_entry = cache[hash];
+			if(temp_table_entry[11]) begin
 				if(prefix_ready) begin
-					if(meta_data[6] && cache[hash][10]) begin
+					if(meta_data[6] && temp_table_entry[10]) begin
 						interest_packet = 1;
 					end
-					cache[hash][10] = 1;
+					temp_table_entry[10] = 1;
 				end
 				table_entry = cache[hash][10:0];
 				pit_in_bit = 1;
@@ -77,10 +81,10 @@ always @(state, out_bit, prefix_ready) begin
 			end
 			else begin
 				if(out_bit) begin
-					cache[hash][9:0] = current_address;
+					temp_table_entry[9:0] = current_address;
 					current_address = current_address + block_size;
-					cache[hash][11] = 1;
-					table_entry = cache[hash][10:0];
+					temp_table_entry[11] = 1;
+					table_entry = temp_table_entry[10:0];
 					pit_in_bit = 1;
 					next_state = idle;
 				end
@@ -99,6 +103,7 @@ end
 always @(posedge clk, posedge rst) begin
 	if(rst) begin
 		state <= reset;
+		cache[hash] <= temp_table_entry;
 	end
 	else begin
 		state <= next_state;		
