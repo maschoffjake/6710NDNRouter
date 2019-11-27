@@ -15,13 +15,13 @@ output reg rejected;
 output reg interest_packet; // Added
 
 
-reg [11:0] cache [1023:0]; //Hash table with 1024 entries
+reg [11:0] cache [63:0]; //Hash table with 63 entries
 reg [9:0] current_address;
 reg [4:0] state;
 reg [4:0] next_state;
 reg [63:0] pre_hash;
 
-wire [9:0]hash;
+wire [5:0]hash;
 
 integer ii;
 
@@ -40,7 +40,7 @@ always @(state, out_bit, prefix_ready) begin
 			table_entry = 0;
 			meta_data = 0;
 			interest_packet = 0;
-			for(ii = 0; ii < 1024; ii=ii+1)
+			for(ii = 0; ii < 64; ii=ii+1)
 				cache[ii] = 0;
 		end
 		// Wait for input from User or FIB
