@@ -29,19 +29,64 @@ integer ii;
 parameter block_size = 1; //1024 bytes per address row
 parameter reset = 0, idle = 1, get_hash = 2;
 
+/*
 always @(state, out_bit, prefix_ready) begin
 	case (state)
 		// Initialize all values
 		reset: begin
+			next_state = idle;
+		end
+		// Wait for input from User or FIB
+		idle: begin
+			if(prefix_ready || out_bit) begin
+				// Set values based on who raised flag
+				if(out_bit) begin
+					next_state = get_hash;
+				end
+				if(prefix_ready) begin
+					next_state = get_hash;
+				end
+			end
+		end
+		// Hash is ready now, so get table entry or create new one
+		get_hash: begin
+			if(temp_table_entry[11]) begin
+				next_state = idle;
+			end
+			else begin
+				if(out_bit) begin
+					next_state = idle;
+				end
+				// If FIB got data that wasn't requested, reject
+				else begin
+					next_state = idle;
+				end
+			end
+		end
+		default:
+			next_state = reset;
+	endcase
+end*/
+
+always @(posedge clk, posedge rst) begin
+	if(rst) begin
+		for(ii = 0; ii < 64; ii=ii+1)
+			cache[ii] = 0;
+		state = reset;
+	end
+	else begin
+		case (state)
+		// Initialize all values
+		reset: begin
 			current_address = 0;
 			rejected = 0;
-			next_state = idle;
 			pre_hash = 0;
 			pit_in_bit = 0;
 			table_entry = 0;
 			temp_table_entry = 0;
 			meta_data = 0;
 			interest_packet = 0;
+			next_state = idle;
 		end
 		// Wait for input from User or FIB
 		idle: begin
@@ -92,22 +137,24 @@ always @(state, out_bit, prefix_ready) begin
 					next_state = idle;
 				end
 			end
+			cache[hash] = temp_table_entry;
 		end
-		default:
-			next_state = reset;
-	endcase
-end
+		default: begin
+			current_address = 0;
+			rejected = 0;
+			pre_hash = 0;
+			pit_in_bit = 0;
+			table_entry = 0;
+			temp_table_entry = 0;
+			meta_data = 0;
+			interest_packet = 0;
+			next_state = idle;
+		end
+		endcase
 
-always @(posedge clk, posedge rst) begin
-	if(rst) begin
-		for(ii = 0; ii < 64; ii=ii+1)
-			cache[ii] = 0;
-		state <= reset;
-	end
-	else begin
-		if (state == get_hash)
-			cache[hash] <= temp_table_entry;
-		state <= next_state;		
+
+
+		state = next_state;		
 	end
 end
 
