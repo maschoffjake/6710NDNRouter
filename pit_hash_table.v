@@ -152,9 +152,22 @@ always @(posedge clk, posedge rst) begin
 		end
 		endcase
 
+<<<<<<< HEAD
 
 
 		state = next_state;		
+=======
+always @(posedge clk, posedge rst) begin
+	if(rst) begin
+		for(ii = 0; ii < 64; ii=ii+1)
+			cache[ii] <= 0;
+		state <= reset;
+	end
+	else begin
+		if (state == get_hash)
+			cache[hash] <= temp_table_entry;
+		state <= next_state;		
+>>>>>>> f907a5e665506a2bf12461c8b6e5ddb28b60becf
 	end
 end
 
