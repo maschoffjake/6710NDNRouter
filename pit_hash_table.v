@@ -101,7 +101,7 @@ end
 always @(posedge clk, posedge rst) begin
 	if(rst) begin
 		for(ii = 0; ii < 64; ii=ii+1)
-			cache[ii] = 0;
+			cache[ii] <= 0;
 		state <= reset;
 	end
 	else begin
