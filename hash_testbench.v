@@ -1,6 +1,6 @@
 module hash_testbench();
 reg [63:0] pre_hash;
-wire [9:0] hash;
+wire [5:0] hash;
 reg clk;
 reg rst;
 integer ii;

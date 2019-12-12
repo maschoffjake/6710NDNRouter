@@ -25,10 +25,8 @@ parameter tx = 0, waiting = 1, next = 2, sending = 3, reset = 4, rx = 5, idle = 
 
 // Instantiate the module
 spi_interface spi_interface_module(
-    .sclk(sclk),
     .mosi(mosi),
     .miso(miso),
-    .cs(cs),
     .clk(clk),
     .rst(rst),
     .RX_valid(RX_valid),

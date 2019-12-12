@@ -15,22 +15,12 @@ reg [2:0] state;
 reg [8:0] rx_count;
 
 spi_mcu SPI_MCU_testbench(
-	.sclk(sclk),
     .mosi(mosi),
     .miso(miso),
-    .cs(cs),
 
     // Overall inputs
     .clk(clk),
     .rst(rst),
-
-    // Receiving output
-    .RX_valid(RX_valid),               // Valid pulse for 1 cycle for RX byte to know data is ready
-    .output_shift_register(output_shift_register),  // Used to send data to the FIB 
-
-    // Transferring input
-    .TX_valid(TX_valid),              // Valid pulse for 1 cycle for TX byte
-    .input_shift_register(input_shift_register),
 
 	.PIT_to_SPI_bit(PIT_to_SPI_bit),
 	.PIT_to_SPI_data(PIT_to_SPI_data),
